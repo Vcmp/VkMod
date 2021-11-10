@@ -11,7 +11,7 @@ This was originally intended as a replacement for the OpenGL for Minecraft clien
 Additional Details of Note 
 
 	This project utilises the most recent alpha versions of LWJGL 3 due to enabling access to Vulkan 1.2 features, 
-  including vkCmdDrawIndexedIndirect and VK_NV_ray_tracing , which are not uapported in the current stable version, likely primarily due to its age.
+  including vkCmdDrawIndexedIndirect and VK_NV_ray_tracing , which are not supported in the current stable version, likely primarily due to its age.
 
 
 	Due to the rundimentary and limited nature of the renderer, stablity and perfokmance are not gurenteed and may lead to unpredicable behaviour 
