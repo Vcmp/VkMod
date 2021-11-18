@@ -11,7 +11,7 @@ public final class GLU2 {
     
     public static final class theGLU {
 
-        protected static Unsafe UNSAFE;
+        private static Unsafe UNSAFE;
 
 
         public static final FloatBuffer MODView = BufferUtils.createFloatBuffer(0x1FFFFF);
@@ -255,6 +255,7 @@ public final class GLU2 {
         {
             UNSAFE.copyMemory(vertices, 16, null, handle, l);
         }
+
 
         public static void memcpy2(short[] vertices, long handle, long l)
         {

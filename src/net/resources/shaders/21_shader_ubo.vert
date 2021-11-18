@@ -1,5 +1,5 @@
 #version 450
-layout(binding = 0) uniform UniformBufferObject {
+layout(vkPushConstant) uniform constants {
     mat4 model;
 //    mat4 proj;
 //    mat4 view;
