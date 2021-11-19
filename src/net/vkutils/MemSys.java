@@ -13,7 +13,7 @@ import static org.lwjgl.vulkan.VK10.VK_NOT_READY;
 import static org.lwjgl.vulkan.VK10.VK_TIMEOUT;
 import static vkutils.VkUtils2.Queues.device;
 
-public record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) /*implements MemoryAllocator*/ {
+public final record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) /*implements MemoryAllocator*/ {
 
 //    protected static final VkAllocationCallbacks pAllocator = null;
     //int m = JEmalloc.je_mallctl()
@@ -31,6 +31,49 @@ public record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         }
     }
 
+    public long mallocLongPtr(long descriptorSets)
+    {
+        long s = malloc(1);
+        memPutLong(s, descriptorSets);
+        return s;
+
+    }
+
+    static final record Memsys2(MemoryStack stack, VkAllocationCallbacks pAllocator)
+    {
+
+        static void doPointerAllocSafe2(@NotNull Pointer allocateInfo, long vkCreateBuffer, long[] a) {
+            //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
+            System.out.println("Attempting to Call: ->"+allocateInfo);
+            Checks.check(allocateInfo.address());
+            checkCall(callPPPPI(VkUtils2.Queues.device.address(), allocateInfo.address(), NULL, a, vkCreateBuffer));
+            free(allocateInfo.address());
+        }
+
+        public static long malloc(long num, long size)
+        {
+            return JEmalloc.nje_malloc(size);//memAddress0(LibCStdlib.malloc(size));
+    //        return LibCStdlib.nmalloc(Integer.toUnsignedLong(size));//memAddress0(LibCStdlib.malloc(size));
+        }
+
+        public static long calloc(long num, long size)
+        {
+            return JEmalloc.nje_calloc(num, size);
+            //return LibCStdlib.ncalloc(num, size);
+        }
+
+        public static void free(long ptr)
+        {
+            JEmalloc.nje_free(ptr);
+        }
+
+        public static void free(ByteBuffer ptr)
+        {
+            JEmalloc.je_free(ptr);
+        }
+
+    }
+
     static void doPointerAllocSafeExtrm2(long imageInfo, long vkCreateImage, long[] a)
     {
         checkCall(JNI.callPPPPI(VkUtils2.Queues.device.address(), imageInfo, NULL, a, vkCreateImage));
@@ -41,14 +84,6 @@ public record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     {
         //            System.out.println(l);
         return memGetLong(address)+(((long) (address1 * 512)) & 0xffffffffL);
-    }
-
-    static void doPointerAllocSafe2(@NotNull Pointer allocateInfo, long vkCreateBuffer, long[] a) {
-        //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
-        System.out.println("Attempting to Call: ->"+allocateInfo);
-        Checks.check(allocateInfo.address());
-        checkCall(callPPPPI(VkUtils2.Queues.device.address(), allocateInfo.address(), NULL, a, vkCreateBuffer));
-        VkUtils2.MemSys.free(allocateInfo.address());
     }
 
     static long doPointerAllocSafeExtrm(long allocateInfo, long vkCreateBuffer) {
@@ -138,37 +173,15 @@ public record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     }
 
 
-    public long malloc(long num, long size)
-    {
-        return JEmalloc.nje_malloc(size);//memAddress0(LibCStdlib.malloc(size));
-//        return LibCStdlib.nmalloc(Integer.toUnsignedLong(size));//memAddress0(LibCStdlib.malloc(size));
-    }
-   /* public long malloc(long num, long size)
+    /* public long malloc(long num, long size)
     {
         return LibCStdlib.nmalloc((size));//memAddress0(LibCStdlib.malloc(size));
     }*/
 
 
-    public long calloc(long num, long size)
-    {
-        return JEmalloc.nje_calloc(num, size);
-        //return LibCStdlib.ncalloc(num, size);
-    }
-
-
     public long realloc(long ptr, long size)
     {
         return 0;
-    }
-
-
-    public void free(long ptr)
-    {
-        JEmalloc.nje_free(ptr);
-    }
-    public void free(ByteBuffer ptr)
-    {
-        JEmalloc.je_free(ptr);
     }
 
 
@@ -183,11 +196,4 @@ public record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 
     }
 
-    public long mallocLongPtr(long descriptorSets)
-    {
-        long s = malloc(1);
-        memPutLong(s, descriptorSets);
-        return s;
-
-    }
 }

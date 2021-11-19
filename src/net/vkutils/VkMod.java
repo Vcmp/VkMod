@@ -21,7 +21,7 @@ public class VkMod {
 
             renderer2.Renderer2.drawFrame();
 
-            renderer2.handleInputs();
+            renderer2.Renderer2.handleInputs();
 
 
             if (System.currentTimeMillis()>l) {
