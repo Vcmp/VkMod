@@ -151,14 +151,14 @@ final class renderer2 {
                 /* for(int i = 0;i < MAX_FRAMES_IN_FLIGHT;i++)*/
                 {
 //                    long vkSemaphoreCreateInfo = doAbsCalloc2(VkSemaphoreCreateInfo.SIZEOF,VkSemaphoreCreateInfo.ALIGNOF)-4L;
-                    long vkSemaphoreCreateInfo = VkUtils2.MemSys.malloc(VkSemaphoreCreateInfo.SIZEOF);
+                    long vkSemaphoreCreateInfo = VkUtils2.MemSys.calloc(VkSemaphoreCreateInfo.SIZEOF);
                     VkSemaphoreCreateInfo.nsType(vkSemaphoreCreateInfo, VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
                     MemSys.doPointerAllocSafeExtrm2(vkSemaphoreCreateInfo, device.getCapabilities().vkCreateSemaphore, AvailableSemaphore);
                     MemSys.doPointerAllocSafeExtrm2(vkSemaphoreCreateInfo, device.getCapabilities().vkCreateSemaphore, FinishedSemaphore);
                     //nmemFree(vkSemaphoreCreateInfo);
 
 //                    long vkFenceCreateInfo = doAbsCalloc(VkFenceCreateInfo.SIZEOF,VkFenceCreateInfo.ALIGNOF);
-                    long vkFenceCreateInfo = VkUtils2.MemSys.malloc(VkFenceCreateInfo.SIZEOF);
+                    long vkFenceCreateInfo = VkUtils2.MemSys.calloc(VkFenceCreateInfo.SIZEOF);
                     VkFenceCreateInfo.nsType(vkFenceCreateInfo, VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
                     VkFenceCreateInfo.nflags(vkFenceCreateInfo, VK_FENCE_CREATE_SIGNALED_BIT);
                     MemSys.doPointerAllocSafeExtrm2(vkFenceCreateInfo, device.getCapabilities().vkCreateFence, vkFence);
@@ -641,12 +641,12 @@ final class renderer2 {
 
         static @NotNull VkCommandBuffer beginSingleTimeCommands() {
 
-            final long allocateInfo = VkUtils2.MemSys.malloc(VkCommandBufferAllocateInfo.SIZEOF);
+            final long allocateInfo = VkUtils2.MemSys.calloc(VkCommandBufferAllocateInfo.SIZEOF);
             VkCommandBufferAllocateInfo.nsType(allocateInfo, VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
             VkCommandBufferAllocateInfo.nlevel(allocateInfo, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
             VkCommandBufferAllocateInfo.ncommandPool(allocateInfo, commandPool[0]);
             VkCommandBufferAllocateInfo.ncommandBufferCount(allocateInfo, 1);
-//            nmemFree(allocateInfo);
+
             VkCommandBuffer commandBuffer = doPointerAllocAlt(allocateInfo, capabilities.vkAllocateCommandBuffers);
             long vkCommandBufferBeginInfo = MemSys.Memsys2.calloc(1, VkCommandBufferBeginInfo.SIZEOF);
             VkCommandBufferBeginInfo.nsType(vkCommandBufferBeginInfo, VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);

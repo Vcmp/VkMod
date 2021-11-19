@@ -50,7 +50,7 @@ public final class VkUtils2 {
     //    KEY(1)
         static final long monitor=0;
     static PointerBuffer glfwExtensions;
-    static final boolean ENABLE_VALIDATION_LAYERS = true;
+    static final boolean ENABLE_VALIDATION_LAYERS = false;
     static final Set<String> VALIDATION_LAYERS;
     static final boolean debug = true;
 
@@ -219,7 +219,7 @@ public final class VkUtils2 {
             swapChainAdequate = SwapChainSupportDetails.formats.hasRemaining() && SwapChainSupportDetails.presentModes.hasRemaining();
         }
 
-        SwapChainSupportDetails.findQueueFamilies(device);
+        Queues.findQueueFamilies(device);
         return Queues.isComplete() && extensionsSupported && swapChainAdequate;
     }
 
@@ -523,9 +523,9 @@ public final class VkUtils2 {
                .imageArrayLayers(1)
                .imageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 
-               findQueueFamilies(Queues.physicalDevice);
+               Queues.findQueueFamilies(Queues.physicalDevice);
 
-                if(!Queues.graphicsFamily.equals(Queues.presentFamily)) {
+                if(!(Queues.graphicsFamily ==Queues.presentFamily)) {
                     //VkSwapchainCreateInfoKHR.imageSharingMode(VK_SHARING_MODE_CONCURRENT);
                     createInfo.imageSharingMode(VK_SHARING_MODE_CONCURRENT);
                     createInfo.pQueueFamilyIndices(MemSys.stack().ints(Queues.graphicsFamily, Queues.presentFamily));
@@ -602,39 +602,6 @@ public final class VkUtils2 {
 //            return details;
         }*/
 
-        private static void findQueueFamilies(VkPhysicalDevice device) {
-
-            {
-
-
-                PointerBuffer queueFamilyCount = memPointerBuffer(MemSys.stack().getAddress(), 1).put(VK_NULL_HANDLE);//long[] queueFamilyCount = MemSys.calloc(1);// stack.stack().ints(0);
-
-
-                nvkGetPhysicalDeviceQueueFamilyProperties(device, queueFamilyCount.address0(), 0);
-                VkQueueFamilyProperties queueFamilies = VkQueueFamilyProperties.create(vkutils.MemSys.Memsys2.malloc(2, VkQueueFamilyProperties.SIZEOF));
-
-                nvkGetPhysicalDeviceQueueFamilyProperties(device, queueFamilyCount.address0(), queueFamilies.address());
-
-                IntBuffer presentSupport = MemSys.stack().ints(VK_FALSE);
-
-                for(int i = 0; i < queueFamilyCount.capacity() ; i++) {
-
-                    if((queueFamilies.queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {
-                        Queues.graphicsFamily = i;
-                    }
-
-                    KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, presentSupport);
-
-                    if(presentSupport.get(0) == VK_TRUE) {
-                        Queues.presentFamily = i;
-                    }
-                }
-                vkutils.MemSys.Memsys2.free(queueFamilies.address());
-                vkutils.MemSys.Memsys2.free(queueFamilyCount.address0());
-
-//                return new QueueFamilyIndices();
-            }
-        }
     }
 
     public static final class PipeLine {
@@ -718,10 +685,9 @@ public final class VkUtils2 {
             VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = VkPipelineVertexInputStateCreateInfo.calloc().sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
                     .pVertexBindingDescriptions(getVertexInputBindingDescription())
-                            .pVertexAttributeDescriptions(getAttributeDescriptions())
-                                    .pNext(NULL);
+                            .pVertexAttributeDescriptions(getAttributeDescriptions());
 //            memPutLong(vkPipelineVertexInputStateCreateInfo.address() + VkPipelineVertexInputStateCreateInfo.PVERTEXATTRIBUTEDESCRIPTIONS, getAttributeDescriptions());
-            VkPipelineVertexInputStateCreateInfo.nvertexAttributeDescriptionCount(vkPipelineVertexInputStateCreateInfo.address(), 3);
+            //VkPipelineVertexInputStateCreateInfo.nvertexAttributeDescriptionCount(vkPipelineVertexInputStateCreateInfo.address(), 3);
             VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc().sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO)
                     .topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
@@ -948,12 +914,12 @@ public final class VkUtils2 {
         }
 
         public static void createCommandPool() {
-            SwapChainSupportDetails.findQueueFamilies(Queues.physicalDevice);
+            Queues.findQueueFamilies(Queues.physicalDevice);
 
-            VkCommandPoolCreateInfo poolInfo = VkCommandPoolCreateInfo.calloc().sType$Default()
+            VkCommandPoolCreateInfo poolInfo = VkCommandPoolCreateInfo.create(vkutils.MemSys.Memsys2.calloc(1, VkCommandPoolCreateInfo.SIZEOF)).sType$Default()
                     .queueFamilyIndex(Queues.graphicsFamily)
                     .flags(0);
-            nmemFree(poolInfo.address());
+            vkutils.MemSys.Memsys2.free(poolInfo.address());
 
             vkutils.MemSys.Memsys2.doPointerAllocSafe2(poolInfo, renderer2.Buffers.capabilities.vkCreateCommandPool, renderer2.Buffers.commandPool);
 
@@ -961,7 +927,7 @@ public final class VkUtils2 {
 
 
         private static VkVertexInputBindingDescription.@NotNull Buffer getVertexInputBindingDescription() {
-            return VkVertexInputBindingDescription.calloc(1, MemSys.stack())
+            return VkVertexInputBindingDescription.create(vkutils.MemSys.Memsys2.calloc(1, VkVertexInputAttributeDescription.SIZEOF),1)
                     .binding(0)
 //                    .stride(vertices.length/2)
 //                    .stride(vertices.length/VERT_SIZE+1)
@@ -1291,7 +1257,7 @@ public final class VkUtils2 {
 
            {
 
-                SwapChainSupportDetails.findQueueFamilies(Queues.physicalDevice);
+                Queues.findQueueFamilies(Queues.physicalDevice);
 
                VkDeviceQueueCreateInfo.Buffer queueCreateInfos = VkDeviceQueueCreateInfo.calloc(uniqueQueueFamilies.length, MemSys.stack());
 
@@ -1384,6 +1350,7 @@ public final class VkUtils2 {
        // We use Integer to use null as the empty value
        static Integer graphicsFamily;
        static Integer presentFamily;
+       static int a =0;
 
         /*static void findQueueFamilies(VkPhysicalDevice device) {
 
@@ -1418,11 +1385,46 @@ public final class VkUtils2 {
            }
        }*/
 
-        static boolean isComplete() {
-           return graphicsFamily != null && presentFamily != null;
-       }
+        static boolean isComplete() {return graphicsFamily != null && presentFamily != null;}
 
-   }
+
+        private static void findQueueFamilies(VkPhysicalDevice device) {
+
+            {
+
+
+                PointerBuffer queueFamilyCount = memPointerBuffer(MemSys.stack().getAddress(), 1).put(VK_NULL_HANDLE);//long[] queueFamilyCount = MemSys.calloc(1);// stack.stack().ints(0);
+
+
+                nvkGetPhysicalDeviceQueueFamilyProperties(device, queueFamilyCount.address0(), 0);
+                VkQueueFamilyProperties.Buffer queueFamilies = VkQueueFamilyProperties.create(vkutils.MemSys.Memsys2.malloc(queueFamilyCount.limit(), VkQueueFamilyProperties.SIZEOF), queueFamilyCount.limit());
+
+                nvkGetPhysicalDeviceQueueFamilyProperties(device, queueFamilyCount.address0(), queueFamilies.address0());
+
+                IntBuffer presentSupport = MemSys.stack().ints(VK_FALSE);
+
+                int i = 0;
+                while (i < queueFamilyCount.limit() /*&& !isComplete()*/) {
+
+                    if((queueFamilies.queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {
+                        graphicsFamily = i;
+                    }
+
+                    KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, presentSupport);
+
+                    if(presentSupport.get(0) == VK_TRUE) {
+                        presentFamily = i;
+                    }
+                    i++;
+                }
+                System.out.println(a+++"Graphics Family: "+graphicsFamily+" Present family: "+presentFamily);
+                vkutils.MemSys.Memsys2.free(queueFamilies.address());
+                vkutils.MemSys.Memsys2.free(queueFamilyCount.address0());
+
+//                return new QueueFamilyIndices();
+            }
+        }
+    }
 
 }
 
