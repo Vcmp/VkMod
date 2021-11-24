@@ -813,7 +813,7 @@ public final class VkUtils2 {
             nmemFree(multisampling.address());
             nmemFree(depthStencil.address());
 
-            Memsys2.free(entryPoint);
+            //Memsys2.free(entryPoint);
             renderer2.Buffers.graphicsPipeline =doPointerAlloc5L(device, pipelineInfo);
             Memsys2.free(pipelineInfo);
 
@@ -863,30 +863,25 @@ public final class VkUtils2 {
                     .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
                     .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
             //TODO: WARn Possible FAIL!
-            VkSubpassDescription vkSubpassDescriptions = VkSubpassDescription.create(vkutils.MemSys.calloc(2, VkSubpassDescription.SIZEOF))
-                    .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
-            vkSubpassDescriptions.colorAttachmentCount(1);
-            memPutLong(vkSubpassDescriptions.address() + VkSubpassDescription.PCOLORATTACHMENTS, colourAttachmentRef.address());
-            if(depthEnabled) {
-                VkAttachmentDescription depthAttachment = attachments.get(1)
-                        .format(findDepthFormat())
-                        .samples(VK_SAMPLE_COUNT_1_BIT)
-                        .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
-                        .storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                        .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-                        .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                        .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-                        .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+            VkSubpassDescription vkSubpassDescriptions = VkSubpassDescription.create(vkutils.MemSys.malloc(VkSubpassDescription.SIZEOF))
+                    .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
+                    .colorAttachmentCount(1)
+                    .pColorAttachments(attachmentsRefs);
+            VkAttachmentDescription depthAttachment = attachments.get(1)
+                    .format(findDepthFormat())
+                    .samples(VK_SAMPLE_COUNT_1_BIT)
+                    .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
+                    .storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
+                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+                    .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+                    .finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
 
             VkAttachmentReference depthAttachmentRef = attachmentsRefs.get(1)
                     .attachment(1)
                     .layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-                memPutLong(vkSubpassDescriptions.address() + VkSubpassDescription.PDEPTHSTENCILATTACHMENT, memAddressSafe(depthAttachmentRef));
-            }
-
-
-
+            memPutLong(vkSubpassDescriptions.address() + VkSubpassDescription.PDEPTHSTENCILATTACHMENT, memAddressSafe(depthAttachmentRef));
 
 
             VkSubpassDependency dependency = VkSubpassDependency.create(vkutils.MemSys.malloc(VkSubpassDependency.SIZEOF))

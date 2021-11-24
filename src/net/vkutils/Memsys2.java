@@ -2,18 +2,15 @@ package vkutils;
 
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.system.Checks;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.Pointer;
 import org.lwjgl.system.jemalloc.JEmalloc;
-import org.lwjgl.vulkan.VkAllocationCallbacks;
 
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.system.JNI.callPPPPI;
-import static org.lwjgl.system.MemoryUtil.NULL;
-import static org.lwjgl.system.MemoryUtil.memGetLong;
+import static org.lwjgl.system.MemoryUtil.*;
 
-final record Memsys2(MemoryStack stack, VkAllocationCallbacks pAllocator) {
+final record Memsys2() {
 
     static void doPointerAllocSafe2(@NotNull Pointer allocateInfo, long vkCreateBuffer, long[] a)
     {
@@ -35,6 +32,8 @@ final record Memsys2(MemoryStack stack, VkAllocationCallbacks pAllocator) {
         System.out.println("            Freeing: ->" + ptr + "Size: " + stacks + " Addr: " + ptr.address() + "Current allocations: " + MemSys.stacks);
         MemSys.stacks -= stacks;
         JEmalloc.nje_free(ptr.address());
+        MemSys.tracker.remove(ptr.address());
+        MemSys.removed.add(ptr.address());
     }
 
     public static void free(long ptr)
@@ -52,6 +51,8 @@ final record Memsys2(MemoryStack stack, VkAllocationCallbacks pAllocator) {
         System.out.println("Freeing: " + ptr + "Size: " + stacks + "Current allocations: " + MemSys.stacks);
         MemSys.stacks -= stacks;
         JEmalloc.nje_free(ptr);
+        MemSys.tracker.remove(ptr);
+        MemSys.removed.add(ptr);
     }
     public static void free8(long ptr)
     {
@@ -63,6 +64,13 @@ final record Memsys2(MemoryStack stack, VkAllocationCallbacks pAllocator) {
 
     public static void free(ByteBuffer ptr)
     {
+        final long orDefault = MemSys.tracker.getOrDefault(memAddress0(ptr), 0L);
+        final long stacks = memGetLong(memAddress0(ptr));//+ orDefault;
+
+        if(stacks==0||orDefault==0)
+        {
+            throw new UnsupportedOperationException("Warn: Don't Need to free!: "+ptr+""+memAddress0(ptr));
+        }
         JEmalloc.je_free(ptr);
     }
 

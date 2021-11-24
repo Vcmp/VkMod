@@ -1,13 +1,16 @@
 package vkutils;
 
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.*;
+import org.lwjgl.system.Checks;
+import org.lwjgl.system.JNI;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.Pointer;
 import org.lwjgl.system.jemalloc.JEmalloc;
 import org.lwjgl.vulkan.VkAllocationCallbacks;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Vector;
 
 import static org.lwjgl.system.JNI.callPPPPI;
 import static org.lwjgl.system.MemoryUtil.*;
@@ -22,6 +25,7 @@ public final record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) 
     static final long[] pDummyPlacementPointerAlloc = {0};
     static long stacks;
     static final HashMap<Long, Long> tracker= new HashMap<>();
+    static final Vector<Long> removed= new Vector<>();
     static final long address = malloc(Pointer.POINTER_SIZE);//nmemAllocChecked(Pointer.POINTER_SIZE);
 
     static void checkCall(int callPPPPI)
@@ -42,6 +46,11 @@ public final record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) 
         {
             System.err.println("WARN:C: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
+        }
+        if(removed.contains(l))
+        {
+            System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
+
         }
         System.out.println("AllocatingC: " + size + " With Capacity: " + num + "Addr: " + l+" Total Allocations : "+stacks);
         stacks += size;
@@ -76,6 +85,11 @@ public final record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) 
             System.err.println("WARN:M: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
         }
+        if(removed.contains(l))
+        {
+            System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
+
+        }
         System.out.println("AllocatingM: " + size + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
         stacks += size;
         tracker.put(l, size);
@@ -85,8 +99,8 @@ public final record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) 
 
     public static long mallocLongPtr(long descriptorSets)
     {
-        System.out.println("AllocatingL: "+descriptorSets+" Total Allocations : "+stacks);
-        long s = JEmalloc.nje_malloc(8);
+        System.out.println("AllocatingL: "+descriptorSets+" Total Allocations : "+stacks+"  "+Thread.currentThread().getStackTrace()[2]);
+        long s = JEmalloc.nje_calloc(1, 8);
         tracker.put(s, descriptorSets);
         stacks+=8;
         System.out.println("Allocated: "+s);

@@ -52,7 +52,7 @@ final class renderer2 {
         {
             vkDestroySemaphore(device, Renderer2.AvailableSemaphore[0], VkUtils2.MemSys.pAllocator());
 //                vkDestroySemaphore(device, VkUtils2.Renderer.FinishedSemaphore[0], pAllocator);
-            vkDestroyFence(device, Renderer2.vkFence[0], VkUtils2.MemSys.pAllocator());
+            //vkDestroyFence(device, Renderer2.vkFence[0], VkUtils2.MemSys.pAllocator());
         }
             vkDestroyDescriptorSetLayout(device, UniformBufferObject.descriptorSetLayout[0], VkUtils2.MemSys.pAllocator());
             vkDestroyDescriptorPool(device, UniformBufferObject.descriptorPool[0], VkUtils2.MemSys.pAllocator());
@@ -100,7 +100,7 @@ final class renderer2 {
         //        private static final int[] imagesInFlight = new int[MAX_FRAMES_IN_FLIGHT];
         static final long[] AvailableSemaphore = {0};
         //        private static final long[] vkFenceA;
-        static final long[] vkFence = {0};
+        //static final long[] vkFence = {0};
         private static final MemoryStack stack2 = VkUtils2.MemSys.stack();
         private static final int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -157,10 +157,10 @@ final class renderer2 {
                     //nmemFree(vkSemaphoreCreateInfo);
 
 //                    long vkFenceCreateInfo = doAbsCalloc(VkFenceCreateInfo.SIZEOF,VkFenceCreateInfo.ALIGNOF);
-                    long vkFenceCreateInfo = VkUtils2.MemSys.ncalloc(VkFenceCreateInfo.SIZEOF);
+                   /* long vkFenceCreateInfo = VkUtils2.MemSys.ncalloc(VkFenceCreateInfo.SIZEOF);
                     VkFenceCreateInfo.nsType(vkFenceCreateInfo, VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
                     VkFenceCreateInfo.nflags(vkFenceCreateInfo, VK_FENCE_CREATE_SIGNALED_BIT);
-                    MemSys.doPointerAllocSafeExtrm2(vkFenceCreateInfo, device.getCapabilities().vkCreateFence, vkFence);
+                    MemSys.doPointerAllocSafeExtrm2(vkFenceCreateInfo, device.getCapabilities().vkCreateFence, vkFence);*/
 //                    vkFence[1] = PipeLine.doPointerAllocSafeExtrm(vkFenceCreateInfo, PipeLine.capabilities.vkCreateFence);
 //                    vkFence[2] = PipeLine.doPointerAllocSafeExtrm(vkFenceCreateInfo, PipeLine.capabilities.vkCreateFence);
                     //nmemFree(vkFenceCreateInfo);
@@ -188,8 +188,8 @@ final class renderer2 {
                     // Align address to the specified alignment
 
 
-                    VkPresentInfoKHR1 = MemSys.malloc(VkPresentInfoKHR.SIZEOF);
-                    memSet(VkPresentInfoKHR1, 0, VkPresentInfoKHR.SIZEOF);
+                    VkPresentInfoKHR1 = MemSys.calloc(0, VkPresentInfoKHR.SIZEOF);
+                    //memSet(VkPresentInfoKHR1, 0, VkPresentInfoKHR.SIZEOF);
                     VkPresentInfoKHR.nsType(VkPresentInfoKHR1, VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
                     memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PWAITSEMAPHORES, (AvailableSemaphore[0]));
                     memPutInt(VkPresentInfoKHR1 + VkPresentInfoKHR.SWAPCHAINCOUNT, 1);
@@ -903,34 +903,33 @@ final class renderer2 {
                     layouts.put(i, descriptorSetLayout);
                 }
 
-                VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.create(VkUtils2.MemSys.ncalloc(VkDescriptorSetAllocateInfo.SIZEOF)).sType$Default();
+                VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.create(MemSys.calloc(1, VkDescriptorSetAllocateInfo.SIZEOF)).sType$Default();
 //                allocInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
-                allocInfo.descriptorPool(descriptorPool[0]);
-                memPutLong(allocInfo.address() + VkDescriptorSetAllocateInfo.PSETLAYOUTS, memAddress0(layouts));
-                memPutInt(allocInfo.address() + VkDescriptorSetAllocateInfo.DESCRIPTORSETCOUNT, layouts.remaining());
+                allocInfo.descriptorPool(descriptorPool[0])
+                    .pSetLayouts(layouts);
 
 //                long[] pDescriptorSets = new long[(SwapChainSupportDetails.swapChainImages.length)];
 //                nmemFree(allocInfo.address());
                 VK10.vkAllocateDescriptorSets(device, allocInfo, descriptorSets);
 
-                long bufferInfo = MemSys.malloc(VkDescriptorBufferInfo.SIZEOF);
-                VkDescriptorBufferInfo.noffset(bufferInfo, 0);
-                VkDescriptorBufferInfo.nrange(bufferInfo, UniformBufferObject.capacity);
+                VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.create(MemSys.calloc(1, VkDescriptorBufferInfo.SIZEOF),1)
+                                .offset(0)
+                                .range(UniformBufferObject.capacity);
 
-                VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.calloc(1, VkUtils2.MemSys.stack())
+                VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.create(MemSys.calloc(1, VkDescriptorImageInfo.SIZEOF),1)
                         .imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                         .imageView(textureImageView[0])
                         .sampler(textureSampler[0]);
 
-                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.create(MemSys.malloc(VkWriteDescriptorSet.SIZEOF),2);
+                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.create(MemSys.calloc(2, VkWriteDescriptorSet.SIZEOF),2).sType$Default();
 
                 VkWriteDescriptorSet vkWriteDescriptorSet = descriptorWrites.get(0).sType$Default()
 //                        .sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
                         .dstBinding(0)
                         .dstArrayElement(0)
                         .descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-                        .descriptorCount(1);
-                memPutAddress(vkWriteDescriptorSet.address() + VkWriteDescriptorSet.PBUFFERINFO, bufferInfo);
+                        .descriptorCount(1)
+                        .pBufferInfo(bufferInfo);
 
                 VkWriteDescriptorSet samplerDescriptorWrite = descriptorWrites.get(1).sType$Default()
 //                        .sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
@@ -943,10 +942,10 @@ final class renderer2 {
 
                 //nmemFree(bufferInfo);
 
-                for(int i = 0;i < descriptorSets.length;i++) {
+                for(int i = 0;i < 1;i++) {
 
 
-                    memPutLong(bufferInfo + VkDescriptorBufferInfo.BUFFER, uniformBuffers[i]);
+                    bufferInfo.buffer(uniformBuffers[i]);
 
                     vkWriteDescriptorSet.dstSet(descriptorSets[i]);
                     samplerDescriptorWrite.dstSet(descriptorSets[i]);
@@ -956,6 +955,7 @@ final class renderer2 {
 //                    descriptorSets[i]=descriptorSet;
 
                 }
+                Memsys2.free(bufferInfo);
 //                System.arraycopy(pDescriptorSets, 0, descriptorSets, 0, pDescriptorSets.length);
             }
         }
