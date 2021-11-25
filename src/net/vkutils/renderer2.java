@@ -52,7 +52,7 @@ final class renderer2 {
         {
             vkDestroySemaphore(device, Renderer2.AvailableSemaphore[0], VkUtils2.MemSys.pAllocator());
 //                vkDestroySemaphore(device, VkUtils2.Renderer.FinishedSemaphore[0], pAllocator);
-            //vkDestroyFence(device, Renderer2.vkFence[0], VkUtils2.MemSys.pAllocator());
+            //vkDestroyFence(device, Renderer2.vkFence[0], VkUtils2.MemSysm.pAllocator());
         }
             vkDestroyDescriptorSetLayout(device, UniformBufferObject.descriptorSetLayout[0], VkUtils2.MemSys.pAllocator());
             vkDestroyDescriptorPool(device, UniformBufferObject.descriptorPool[0], VkUtils2.MemSys.pAllocator());
@@ -152,15 +152,15 @@ final class renderer2 {
 //                    long vkSemaphoreCreateInfo = doAbsCalloc2(VkSemaphoreCreateInfo.SIZEOF,VkSemaphoreCreateInfo.ALIGNOF)-4L;
                     long vkSemaphoreCreateInfo = VkUtils2.MemSys.ncalloc(VkSemaphoreCreateInfo.SIZEOF);
                     VkSemaphoreCreateInfo.nsType(vkSemaphoreCreateInfo, VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
-                    MemSys.doPointerAllocSafeExtrm2(vkSemaphoreCreateInfo, device.getCapabilities().vkCreateSemaphore, AvailableSemaphore);
-                    MemSys.doPointerAllocSafeExtrm2(vkSemaphoreCreateInfo, device.getCapabilities().vkCreateSemaphore, FinishedSemaphore);
+                    MemSysm.doPointerAllocSafeExtrm2(vkSemaphoreCreateInfo, device.getCapabilities().vkCreateSemaphore, AvailableSemaphore);
+                    MemSysm.doPointerAllocSafeExtrm2(vkSemaphoreCreateInfo, device.getCapabilities().vkCreateSemaphore, FinishedSemaphore);
                     //nmemFree(vkSemaphoreCreateInfo);
 
 //                    long vkFenceCreateInfo = doAbsCalloc(VkFenceCreateInfo.SIZEOF,VkFenceCreateInfo.ALIGNOF);
-                   /* long vkFenceCreateInfo = VkUtils2.MemSys.ncalloc(VkFenceCreateInfo.SIZEOF);
+                   /* long vkFenceCreateInfo = VkUtils2.MemSysm.ncalloc(VkFenceCreateInfo.SIZEOF);
                     VkFenceCreateInfo.nsType(vkFenceCreateInfo, VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
                     VkFenceCreateInfo.nflags(vkFenceCreateInfo, VK_FENCE_CREATE_SIGNALED_BIT);
-                    MemSys.doPointerAllocSafeExtrm2(vkFenceCreateInfo, device.getCapabilities().vkCreateFence, vkFence);*/
+                    MemSysm.doPointerAllocSafeExtrm2(vkFenceCreateInfo, device.getCapabilities().vkCreateFence, vkFence);*/
 //                    vkFence[1] = PipeLine.doPointerAllocSafeExtrm(vkFenceCreateInfo, PipeLine.capabilities.vkCreateFence);
 //                    vkFence[2] = PipeLine.doPointerAllocSafeExtrm(vkFenceCreateInfo, PipeLine.capabilities.vkCreateFence);
                     //nmemFree(vkFenceCreateInfo);
@@ -173,7 +173,7 @@ final class renderer2 {
 //                    pFences = memAddress0(longs2);
                     // Align address to the specified alignment
 //                    long address = (stack.stack().getAddress() + stack.stack().getPointer() - 8) & -8L;
-                    long address21 = MemSys.malloc(VkSubmitInfo.SIZEOF);//(ncalloc());
+                    long address21 = MemSysm.malloc(VkSubmitInfo.SIZEOF);//(ncalloc());
                     VkSubmitInfo.nsType(address21, VK_STRUCTURE_TYPE_SUBMIT_INFO);
                     VkSubmitInfo.nwaitSemaphoreCount(address21, 1);
                     VkSubmitInfo.npNext(address21, NULL);
@@ -188,7 +188,7 @@ final class renderer2 {
                     // Align address to the specified alignment
 
 
-                    VkPresentInfoKHR1 = MemSys.calloc(0, VkPresentInfoKHR.SIZEOF);
+                    VkPresentInfoKHR1 = MemSysm.malloc(VkPresentInfoKHR.SIZEOF);
                     //memSet(VkPresentInfoKHR1, 0, VkPresentInfoKHR.SIZEOF);
                     VkPresentInfoKHR.nsType(VkPresentInfoKHR1, VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
                     memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PWAITSEMAPHORES, (AvailableSemaphore[0]));
@@ -205,7 +205,7 @@ final class renderer2 {
                     VkSubmitInfo.validate(address21);
                     VkPresentInfoKHR.validate(VkPresentInfoKHR1);
 
-                    System.out.println(MemSys.tracker);
+                    System.out.println(MemSysm.tracker);
 
                 }
 
@@ -302,7 +302,7 @@ final class renderer2 {
 
     static final class Buffers {
         public static final VkCommandBuffer[] commandBuffers = new VkCommandBuffer[VkUtils2.SwapChainSupportDetails.swapChainFramebuffers.length];
-        static final short[] indices = new short[VkUtils2.PipeLine.indicesTemp.length*8];
+        static final short[] indices = new short[VkUtils2.PipeLine.indicesTemp.length*64];
         static final int size = Short.BYTES * indices.length;
         static final VkOffset2D set = VkOffset2D.calloc(VkUtils2.MemSys.stack()).set(0, 0);
         static final long[] commandPool ={VK_NULL_HANDLE};
@@ -358,7 +358,7 @@ final class renderer2 {
 
         };
         static int dest= -verticesTemp.length;
-        static final float[] vertices = new float[(verticesTemp.length)*8];
+        static final float[] vertices = new float[(verticesTemp.length)*64];
         static final int value = /*SIZEOF **/ vertices.length* Float.BYTES;
 
         private static final int VERT_SIZE= vertices.length/ 8;
@@ -367,9 +367,9 @@ final class renderer2 {
         static long graphicsPipeline;
         private static long beginInfo1;
         private static VkRenderPassBeginInfo renderPassInfo;
-        private static final VkSubmitInfo submitInfo1 = VkSubmitInfo.create(MemSys.calloc(1,VkSubmitInfo.SIZEOF))//VkUtils2.MemSys.nmalloc(VkSubmitInfo.ALIGNOF, VkSubmitInfo.SIZEOF);
+        private static final VkSubmitInfo submitInfo1 = VkSubmitInfo.create(MemSysm.calloc(1,VkSubmitInfo.SIZEOF))//VkUtils2.MemSysm.nmalloc(VkSubmitInfo.ALIGNOF, VkSubmitInfo.SIZEOF);
                 .sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-        private static final long vkMemoryRequirements = MemSys.malloc(VkMemoryRequirements.SIZEOF);
+        private static final long vkMemoryRequirements = MemSysm.mallocM(1, VkMemoryRequirements.SIZEOF);
 
         static
         {
@@ -378,9 +378,9 @@ final class renderer2 {
             doBufferAlloc();
 
 
-            for (int i =-1; i< 1; i++)
-                for (int ii = -1; ii < 1; ii++)
-                    for (int iii = -1; iii < 1; iii++)
+            for (int i =-2; i< 2; i++)
+                for (int ii = -2; ii < 2; ii++)
+                    for (int iii = -2; iii < 2; iii++)
                         doBufferAlloc2(i, ii, iii);
             //setup/doDepupeface/FaceCukking/
             //Still Likley better to reply in indicies buffer to inherent deuplcitaion/culling aslingas/if/based upon /which as  aconsequence of deplictaing same
@@ -402,7 +402,7 @@ final class renderer2 {
         }
 
         public static void createCommandBuffers() {
-            VkCommandBufferAllocateInfo allocateInfo = VkCommandBufferAllocateInfo.create(MemSys.malloc(VkCommandBufferAllocateInfo.SIZEOF))
+            VkCommandBufferAllocateInfo allocateInfo = VkCommandBufferAllocateInfo.create(MemSysm.malloc(VkCommandBufferAllocateInfo.SIZEOF))
                     .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
             .commandPool(getRef())
             .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
@@ -412,18 +412,18 @@ final class renderer2 {
 
             //nmemFree(allocateInfo);
             long[] descriptorSets = new long[allocateInfo.commandBufferCount()];
-//            MemSys.Memsys2.free(allocateInfo);
+//            MemSysm.Memsys2.free(allocateInfo);
             doPointerAllocS(allocateInfo, capabilities.vkAllocateCommandBuffers, descriptorSets);
             commandBuffers[0]=new VkCommandBuffer(descriptorSets[0], device);
             commandBuffers[1]=new VkCommandBuffer(descriptorSets[1], device);
 //            commandBuffers[2]=new VkCommandBuffer(descriptorSets[1], device);
 
 
-            beginInfo1 = MemSys.calloc(1, VkCommandBufferBeginInfo.SIZEOF);
+            beginInfo1 = MemSysm.calloc(1, VkCommandBufferBeginInfo.SIZEOF);
             VkCommandBufferBeginInfo.nsType(beginInfo1, VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
             VkCommandBufferBeginInfo.nflags(beginInfo1, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
-            renderPassInfo = VkRenderPassBeginInfo.create(MemSys.malloc(VkRenderPassBeginInfo.SIZEOF)).sType$Default();
+            renderPassInfo = VkRenderPassBeginInfo.create(MemSysm.malloc(VkRenderPassBeginInfo.SIZEOF)).sType$Default();
             renderPassInfo
 //                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
                     .renderPass(VkUtils2.SwapChainSupportDetails.renderPass[0]);
@@ -434,7 +434,7 @@ final class renderer2 {
 
             //todo: multiple attachments with VK_ATTACHMENT_LOAD_OP_CLEAR: https://vulkan-tutorial.com/en/Depth_buffering#page_Clear-values
 
-            VkClearValue.Buffer clearValues = VkClearValue.create(MemSys.malloc(VkClearValue.SIZEOF), 2);
+            VkClearValue.Buffer clearValues = VkClearValue.create(MemSysm.malloc(VkClearValue.SIZEOF), 2);
             clearValues.get(0).color().float32(VkUtils2.MemSys.stack().floats(0.0f, 0.0f, 0.0f, 1.0f));
             clearValues.get(1).depthStencil().set(1.0f, 0);
             memPutLong(renderPassInfo.address() + VkRenderPassBeginInfo.PCLEARVALUES, clearValues.address0());
@@ -445,10 +445,10 @@ final class renderer2 {
                 * This has the darwback of requiring specific alignment when when Obtaining.Plaicng.reading/Writing references.memory Adresses, which at leas in the case of Command Buffers.Uniform buffers seems to be exactly 512, which may potnetial decrease stabilility due to lack of potentoa,s afty wth prevent.prpettcing. mana ging agaonst/with/for Acess Viplations/Segfaults e.g.
 
              */
-            nvkMapMemory(device, UniformBufferObject.uniformBuffersMemory[0], 0, UniformBufferObject.capacity, 0, MemSys.address);
-            nvkMapMemory(device, UniformBufferObject.uniformBuffersMemory[1], 0, UniformBufferObject.capacity, 0, MemSys.address);
+            nvkMapMemory(device, UniformBufferObject.uniformBuffersMemory[0], 0, UniformBufferObject.capacity, 0, MemSysm.address);
+            nvkMapMemory(device, UniformBufferObject.uniformBuffersMemory[1], 0, UniformBufferObject.capacity, 0, MemSysm.address);
 
-            /*VkPushConstantRange vkPushConstantRange = VkPushConstantRange.calloc(VkUtils2.MemSys.stack())
+            /*VkPushConstantRange vkPushConstantRange = VkPushConstantRange.calloc(VkUtils2.MemSysm.stack())
                     .offset(0)
                     .size(UniformBufferObject.proj2.length*Float.BYTES);*/
 
@@ -482,10 +482,10 @@ final class renderer2 {
                     (float) Math.sin(angle),
                     (float) Math.cos(angle+ UniformBufferObject.Half_Pi)
             );//vkPushConstant
-            //vkPushConstant vkPushConstant=new vkPushConstant(MemSys.getHandle(i), UniformBufferObject.proj2);
+            //vkPushConstant vkPushConstant=new vkPushConstant(MemSysm.getHandle(i), UniformBufferObject.proj2);
 
             vkCmdPushConstants(commandBuffer, vkLayout[0], VK_SHADER_STAGE_VERTEX_BIT, 0, (UniformBufferObject.proj2));*/
-                long pointerBuffer = MemSys.mallocLongPtr(UniformBufferObject.descriptorSets[0]);
+                long pointerBuffer = MemSysm.mallocLongPtr(UniformBufferObject.descriptorSets[0]);
 
                 // Convert to long to support addressing up to 2^31-1 elements, regardless of sizeof(element).
                 // The unsigned conversion helps the JIT produce code that is as fast as if int was returned.
@@ -517,7 +517,7 @@ final class renderer2 {
 
         //todo: need to do thsi seperately from createBuffer as Java cannot handle references/pointrs by default and the buffre must be a field due to the bindVertexBuffers call needing acces to teh same VertexBuffer that is cerated, and a methdo/upu cannto return multiple variables/refercnes/valeus at teh same time
         static void setBuffer(int usage, int size, long[] a) {
-            VkBufferCreateInfo allocateInfo = VkBufferCreateInfo.create(MemSys.malloc(VkBufferCreateInfo.SIZEOF))
+            VkBufferCreateInfo allocateInfo = VkBufferCreateInfo.create(MemSysm.malloc(VkBufferCreateInfo.SIZEOF))
                     .sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
             .size(size)
             .usage(usage)
@@ -528,25 +528,25 @@ final class renderer2 {
         }
 
         static long setBuffer(int usage, int size) {
-            //long allocateInfo = VkUtils2.MemSys.malloc(VkBufferCreateInfo.SIZEOF);
-            VkBufferCreateInfo allocateInfo = VkBufferCreateInfo.create(MemSys.calloc(1, VkBufferCreateInfo.SIZEOF))
+            //long allocateInfo = VkUtils2.MemSysm.malloc(VkBufferCreateInfo.SIZEOF);
+            VkBufferCreateInfo allocateInfo = VkBufferCreateInfo.create(MemSysm.calloc(1, VkBufferCreateInfo.SIZEOF))
             .sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
             .size(size)
             .usage(usage)
             .sharingMode(VK_SHARING_MODE_EXCLUSIVE);
             //nmemFree(allocateInfo);
             Memsys2.free(allocateInfo);
-            return MemSys.doPointerAllocSafe(allocateInfo, capabilities.vkCreateBuffer);
+            return MemSysm.doPointerAllocSafe(allocateInfo, capabilities.vkCreateBuffer);
         }
 
         static void createBuffer(int properties, long[] currentBuffer, long[] vertexBufferMemory) {
 
-            //long vkMemoryRequirements = VkUtils2.MemSys.malloc(VkMemoryRequirements.SIZEOF);
+            //long vkMemoryRequirements = VkUtils2.MemSysm.malloc(VkMemoryRequirements.SIZEOF);
 
             nvkGetBufferMemoryRequirements(device, currentBuffer[0], vkMemoryRequirements);
 
 
-            VkMemoryAllocateInfo allocateInfo1 = VkMemoryAllocateInfo.create(MemSys.calloc(1, VkMemoryAllocateInfo.SIZEOF))
+            VkMemoryAllocateInfo allocateInfo1 = VkMemoryAllocateInfo.create(MemSysm.calloc(1, VkMemoryAllocateInfo.SIZEOF))
                     .sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
             .allocationSize(VkMemoryRequirements.nsize(vkMemoryRequirements))
             .memoryTypeIndex(findMemoryType(VkMemoryRequirements.nmemoryTypeBits(vkMemoryRequirements), properties));
@@ -559,7 +559,7 @@ final class renderer2 {
         }
 
         static int findMemoryType(int typeFilter, int properties) {
-            VkPhysicalDeviceMemoryProperties memProperties = VkPhysicalDeviceMemoryProperties.create(MemSys.malloc(VkPhysicalDeviceFeatures.SIZEOF));
+            VkPhysicalDeviceMemoryProperties memProperties = VkPhysicalDeviceMemoryProperties.create(MemSysm.malloc(VkPhysicalDeviceFeatures.SIZEOF));
             vkGetPhysicalDeviceMemoryProperties(VkUtils2.Queues.physicalDevice, memProperties);
             for (int i = 0; i < memProperties.memoryTypeCount(); i++) {
                 if ((typeFilter & (1 << i)) != 0 && (memProperties.memoryTypes(i).propertyFlags() & properties) == properties) {
@@ -576,7 +576,7 @@ final class renderer2 {
             nvkGetBufferMemoryRequirements(device, currentBuffer, vkMemoryRequirements);
 
             long[] vertexBufferMemory={0};
-            VkMemoryAllocateInfo allocateInfo1 = VkMemoryAllocateInfo.create(MemSys.malloc(VkMemoryAllocateInfo.SIZEOF))
+            VkMemoryAllocateInfo allocateInfo1 = VkMemoryAllocateInfo.create(MemSysm.malloc(VkMemoryAllocateInfo.SIZEOF))
                     .sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
             .allocationSize(VkMemoryRequirements.nsize(vkMemoryRequirements))
             .memoryTypeIndex(findMemoryType(VkMemoryRequirements.nmemoryTypeBits(vkMemoryRequirements), VK_MEMORY_PROPERTY_HOST_CACHED_BIT));
@@ -626,7 +626,7 @@ final class renderer2 {
 
             VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
-            long vkBufferCopy = MemSys.malloc(VkBufferCopy.SIZEOF);
+            long vkBufferCopy = MemSysm.malloc(VkBufferCopy.SIZEOF);
             VkBufferCopy.nsrcOffset(vkBufferCopy, 0);
             VkBufferCopy.ndstOffset(vkBufferCopy, 0);
             VkBufferCopy.nsize(vkBufferCopy, size);
@@ -638,21 +638,21 @@ final class renderer2 {
 
         private static VkCommandBuffer doPointerAllocAlt(long allocateInfo, long vkAllocateCommandBuffers) {
             //            vkAllocateMemory(device, allocateInfo, pAllocator(), pVertexBufferMemory);
-            callPPPI(device.address(), allocateInfo, MemSys.pDummyPlacementPointerAlloc, vkAllocateCommandBuffers);
-            return new VkCommandBuffer(MemSys.pDummyPlacementPointerAlloc[0], device);
+            callPPPI(device.address(), allocateInfo, MemSysm.pDummyPlacementPointerAlloc, vkAllocateCommandBuffers);
+            return new VkCommandBuffer(MemSysm.pDummyPlacementPointerAlloc[0], device);
 
         }
 
         static @NotNull VkCommandBuffer beginSingleTimeCommands() {
 
-            final long allocateInfo = MemSys.malloc(VkCommandBufferAllocateInfo.SIZEOF);
+            final long allocateInfo = MemSysm.malloc(VkCommandBufferAllocateInfo.SIZEOF);
             VkCommandBufferAllocateInfo.nsType(allocateInfo, VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
             VkCommandBufferAllocateInfo.nlevel(allocateInfo, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
             VkCommandBufferAllocateInfo.ncommandPool(allocateInfo, commandPool[0]);
             VkCommandBufferAllocateInfo.ncommandBufferCount(allocateInfo, 1);
 
             VkCommandBuffer commandBuffer = doPointerAllocAlt(allocateInfo, capabilities.vkAllocateCommandBuffers);
-            long vkCommandBufferBeginInfo = MemSys.calloc(1, VkCommandBufferBeginInfo.SIZEOF);
+            long vkCommandBufferBeginInfo = MemSysm.calloc(1, VkCommandBufferBeginInfo.SIZEOF);
             VkCommandBufferBeginInfo.nsType(vkCommandBufferBeginInfo, VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
             VkCommandBufferBeginInfo.nflags(vkCommandBufferBeginInfo, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
             nvkBeginCommandBuffer(commandBuffer, vkCommandBufferBeginInfo);
@@ -662,7 +662,7 @@ final class renderer2 {
         static void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
             vkEndCommandBuffer(commandBuffer);
 
-            final long pointers = MemSys.mallocLongPtr(commandBuffer);
+            final long pointers = MemSysm.mallocLongPtr(commandBuffer);
             memPutAddress(submitInfo1.address() + VkSubmitInfo.PCOMMANDBUFFERS, pointers);
             VkSubmitInfo.ncommandBufferCount(submitInfo1.address(), 1);
 
@@ -676,7 +676,7 @@ final class renderer2 {
 
         static void createDescriptorSetLayout() {
              {
-                 VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.create(MemSys.malloc(VkDescriptorSetLayoutBinding.SIZEOF), 2);
+                 VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.create(MemSysm.malloc(VkDescriptorSetLayoutBinding.SIZEOF), 2);
                /*  long[] bindings = {
                          stack.stack().ncalloc(VkDescriptorSetLayoutBinding.ALIGNOF, 1, VkDescriptorSetLayoutBinding.SIZEOF),
                          stack.stack().ncalloc(VkDescriptorSetLayoutBinding.ALIGNOF, 1, VkDescriptorSetLayoutBinding.SIZEOF)
@@ -709,13 +709,13 @@ final class renderer2 {
                  .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
 
 
-                 VkDescriptorSetLayoutCreateInfo a = VkDescriptorSetLayoutCreateInfo.create(MemSys.malloc(VkDescriptorSetLayoutCreateInfo.SIZEOF))
+                 VkDescriptorSetLayoutCreateInfo a = VkDescriptorSetLayoutCreateInfo.create(MemSysm.malloc(VkDescriptorSetLayoutCreateInfo.SIZEOF))
                          .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO)
                          .pBindings(bindings);
     //                 memPutAddress(a + VkDescriptorSetLayoutCreateInfo.PBINDINGS, bindings[1]);
 //                 VkDescriptorSetLayoutCreateInfo.nbindingCount(a.address(), bindings.remaining());
-                 Memsys2.free(bindings);
-                 //VkUtils2.MemSys.free(a);
+//                 Memsys2.free(bindings);
+                 //VkUtils2.MemSysm.free(a);
 //                 nmemFree(a);
 //                 memFree(bindings);
                  Memsys2.doPointerAllocSafe2(a, device.getCapabilities().vkCreateDescriptorSetLayout, UniformBufferObject.descriptorSetLayout);
@@ -729,9 +729,9 @@ final class renderer2 {
 
     //            VkPushConstantRange.
 
-            nvkMapMemory(device, stagingBufferMemory[0], 0, value, 0, MemSys.address);
+            nvkMapMemory(device, stagingBufferMemory[0], 0, value, 0, MemSysm.address);
             {
-                GLU2.theGLU.memcpy2(vertices, MemSys.getHandle(), ((long) (vertices.length << 2)) & 0xffffffffL);
+                GLU2.theGLU.memcpy2(vertices, MemSysm.getHandle(), ((long) (vertices.length << 2)) & 0xffffffffL);
                 //                GLU2.theGLU.wrap()
 
             }
@@ -746,7 +746,7 @@ final class renderer2 {
 
         public static void createIndexBuffer() {
 
-            nvkMapMemory(device, stagingBufferMemory[0], 0, size, 0, MemSys.address);
+            nvkMapMemory(device, stagingBufferMemory[0], 0, size, 0, MemSysm.address);
             {
 //                memFloatBuffer(data.get(0), vertices.length).put(vertices);
                 /*todo: might e posible to only undata.remap a specic aaspect of the mapped buffer memory if only a specici vbo, vertex is being updated instead of remappign teh entre buffer every/Single time
@@ -757,7 +757,7 @@ final class renderer2 {
                 */
 
 //                memShortBuffer(getHandle(), SIZEOFIn).put(indices);
-                GLU2.theGLU.memcpy2(indices, MemSys.getHandle(), ((long) (indices.length << 2)) & 0xffffffffL);
+                GLU2.theGLU.memcpy2(indices, MemSysm.getHandle(), ((long) (indices.length << 2)) & 0xffffffffL);
 //                GLU2.theGLU.wrap()
 
             }
@@ -793,15 +793,21 @@ final class renderer2 {
         static final long[] textureImageView = {0};
         static final long[] textureSampler = {0};
 
+        private static final float zFar = 40.0f;
+
+        private static final float zNear = 1.8f;
+
         static {
             Matrix4f proj = new Matrix4f().identity().determineProperties().identity().m00(1.0f / (h * (VkUtils2.SwapChainSupportDetails.swapChainExtent.width() / (float) VkUtils2.SwapChainSupportDetails.swapChainExtent.height())))
                     .m11((1.0f / h) * -1)
-                    .m22((20.0f + 0.8f) / (0.8f - 20.0f))
-                    .m32((20.0f + 20.0f) * 0.8f / (0.8f - 20.0f))
+                    .m22((zFar + zNear) / (zNear - zFar))
+                    .m32((zFar + zFar) * zNear / (zNear - zFar))
                     .m23(-1.0f);
             proj.mulPerspectiveAffine(new Matrix4f().identity().determineProperties().setLookAt(2.0f, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f));
+                proj.translate(-5, -0, -5);
                 proj.get(proj2);
-                System.arraycopy(proj2, 0, proj3, 0, 8);
+//                proj2.put(proj3).re();
+                System.arraycopy(proj2, 0, proj3, 0, 16);
 
         }
         //todo: Important: atcuall have to 'reset; or revert teh matrixces bakc to baseline.Idneitfy in order to atcually update te Unform Buffer(s) properly e.g. .etc i.e.
@@ -843,7 +849,7 @@ final class renderer2 {
             //                    .properties(Matrix4fc.PROPERTY_PERSPECTIVE);
 
             {
-                memcpy(MemSys.getHandle(pImageIndex));
+                memcpy(MemSysm.getHandle(pImageIndex));
             }
 
         }
@@ -871,13 +877,13 @@ final class renderer2 {
         private static void memcpy(long handle)
         {
 //            abs.getToAddress(handle);
-//            memFloatBuffer(handle, proj2.length).put(proj2);
-            GLU2.theGLU.memcpy2(UniformBufferObject.proj2, handle, (long) UniformBufferObject.proj2.length <<2);
+            memFloatBuffer(handle, proj2.length).put(proj2);
+//            GLU2.theGLU.memcpy2(UniformBufferObject.proj2, handle, (long) UniformBufferObject.proj2.length <<2);
         }
 
         static void createDescriptorPool() {
             {
-                VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.create(MemSys.calloc(2, VkDescriptorPoolSize.SIZEOF), 2);
+                VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.create(MemSysm.calloc(2, VkDescriptorPoolSize.SIZEOF), 2);
 //                        .type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
 //                        .descriptorCount(PipeLine.swapChainImages.length);
                 VkDescriptorPoolSize uniformBufferPoolSize = poolSize.get(0)
@@ -887,7 +893,7 @@ final class renderer2 {
                 VkDescriptorPoolSize textureSamplerPoolSize = poolSize.get(1)
 //                        .type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
                         .descriptorCount(VkUtils2.SwapChainSupportDetails.swapChainImages.length);
-                VkDescriptorPoolCreateInfo poolCreateInfo = VkDescriptorPoolCreateInfo.create(MemSys.calloc(1, VkDescriptorPoolCreateInfo.SIZEOF)).sType$Default()
+                VkDescriptorPoolCreateInfo poolCreateInfo = VkDescriptorPoolCreateInfo.create(MemSysm.calloc(1, VkDescriptorPoolCreateInfo.SIZEOF)).sType$Default()
 //                        .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO)
                         .pPoolSizes(poolSize)
                         .maxSets(VkUtils2.PipeLine.swapChainImages.length);
@@ -903,7 +909,7 @@ final class renderer2 {
                     layouts.put(i, descriptorSetLayout);
                 }
 
-                VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.create(MemSys.calloc(1, VkDescriptorSetAllocateInfo.SIZEOF)).sType$Default();
+                VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.create(MemSysm.calloc(1, VkDescriptorSetAllocateInfo.SIZEOF)).sType$Default();
 //                allocInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
                 allocInfo.descriptorPool(descriptorPool[0])
                     .pSetLayouts(layouts);
@@ -912,16 +918,16 @@ final class renderer2 {
 //                nmemFree(allocInfo.address());
                 VK10.vkAllocateDescriptorSets(device, allocInfo, descriptorSets);
 
-                VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.create(MemSys.calloc(1, VkDescriptorBufferInfo.SIZEOF),1)
+                VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.create(MemSysm.calloc(1, VkDescriptorBufferInfo.SIZEOF),1)
                                 .offset(0)
                                 .range(UniformBufferObject.capacity);
 
-                VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.create(MemSys.calloc(1, VkDescriptorImageInfo.SIZEOF),1)
+                VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.create(MemSysm.calloc(1, VkDescriptorImageInfo.SIZEOF),1)
                         .imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                         .imageView(textureImageView[0])
                         .sampler(textureSampler[0]);
 
-                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.create(MemSys.calloc(2, VkWriteDescriptorSet.SIZEOF),2).sType$Default();
+                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.create(MemSysm.calloc(2, VkWriteDescriptorSet.SIZEOF),2).sType$Default();
 
                 VkWriteDescriptorSet vkWriteDescriptorSet = descriptorWrites.get(0).sType$Default()
 //                        .sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)

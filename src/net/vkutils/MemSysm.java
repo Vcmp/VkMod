@@ -7,10 +7,11 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.Pointer;
 import org.lwjgl.system.jemalloc.JEmalloc;
 import org.lwjgl.vulkan.VkAllocationCallbacks;
+import org.lwjgl.vulkan.VkMemoryRequirements;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Vector;
+import java.nio.LongBuffer;
+import java.util.*;
 
 import static org.lwjgl.system.JNI.callPPPPI;
 import static org.lwjgl.system.MemoryUtil.*;
@@ -18,16 +19,16 @@ import static org.lwjgl.vulkan.VK10.VK_NOT_READY;
 import static org.lwjgl.vulkan.VK10.VK_TIMEOUT;
 import static vkutils.VkUtils2.Queues.device;
 
-public final record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) /*implements MemoryAllocator*/ {
+public final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*implements MemoryAllocator*/ {
 
 //    protected static final VkAllocationCallbacks pAllocator = null;
     //int m = JEmalloc.je_mallctl()
     static final long[] pDummyPlacementPointerAlloc = {0};
     static long stacks;
     static final HashMap<Long, Long> tracker= new HashMap<>();
-    static final Vector<Long> removed= new Vector<>();
-    static final long address = malloc(Pointer.POINTER_SIZE);//nmemAllocChecked(Pointer.POINTER_SIZE);
-
+    static  long address = JEmalloc.nje_mallocx(128, 0);//nmemAllocChecked(Pointer.POINTER_SIZE);
+    static final LongBuffer removed = memLongBuffer(address+128L, 64);
+    //static final long MemMainAllC = JEmalloc.nje_mallocx(128, 0);
     static void checkCall(int callPPPPI)
     {
         switch (callPPPPI)
@@ -39,6 +40,13 @@ public final record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) 
         }
     }
 
+    public static long mallocM(long num, long size)
+    {
+        System.err.println(VkMemoryRequirements.SIZEOF);
+        //final long l = JEmalloc.nje_malloc(MemMainAllC+size);
+        return address+=size;
+    }
+
     public static long calloc(long num, long size)
     {
         final long l = JEmalloc.nje_calloc(num, size);
@@ -47,7 +55,7 @@ public final record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) 
             System.err.println("WARN:C: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
         }
-        if(removed.contains(l))
+        if(contains(l))
         {
             System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
 
@@ -57,6 +65,17 @@ public final record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) 
         tracker.put(l, size);
         return l;
         //return LibCStdlib.ncalloc(num, size);
+    }
+
+    private static boolean contains(long l)
+    {
+        //removed.rewind();
+        for (int i=0; i< removed.limit(); i++)
+        {
+            if(removed.get(i)==l)
+                return true;
+        }
+        return false;
     }
 
     public static ByteBuffer mallocB(int i, int size)
@@ -85,7 +104,7 @@ public final record MemSys(MemoryStack stack, VkAllocationCallbacks pAllocator) 
             System.err.println("WARN:M: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
         }
-        if(removed.contains(l))
+        if(contains(l))
         {
             System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
 

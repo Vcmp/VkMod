@@ -1,11 +1,8 @@
 package vkutils;
 
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
-import java.nio.*;
 
 public final class GLU2 {
     
@@ -14,16 +11,16 @@ public final class GLU2 {
         private static Unsafe UNSAFE;
 
 
-        public static final FloatBuffer MODView = BufferUtils.createFloatBuffer(0x1FFFFF);
+       /* public static final FloatBuffer MODView = BufferUtils.createFloatBuffer(0x1FFFFF);
         //     static final FloatBuffer PROJ = BufferUtils.createFloatBuffer(0x1FFFFF);
-        static final FloatBuffer INCBUF = BufferUtils.createFloatBuffer(0x1FFFFF);
+        //static final FloatBuffer INCBUF = BufferUtils.createFloatBuffer(0x1FFFFF);
 
         private static final float[] MATRIX = {1, 0, 0, 0,
                 0, 1, 0, 0,
                 0, 0, 1, 0,
-                0, 0, 0, 1};
-        private static final int offset = 16;
-        private static final FloatBuffer matrix2 = BufferUtils.createFloatBuffer(offset).put((MATRIX), 0, (MATRIX).length);
+                0, 0, 0, 1};*/
+        //private static final int offset = 16;
+        /*private static final FloatBuffer matrix2 = BufferUtils.createFloatBuffer(offset).put((MATRIX), 0, (MATRIX).length);
 
 
         private static final FloatBuffer matrix = BufferUtils.createFloatBuffer(offset);
@@ -35,21 +32,29 @@ public final class GLU2 {
         private static final float[] IDENTITY_MATRIX = {1.0F, 0.0F, 0.0F, 0.0F,
                 0.0F, COTANGENT, 0.0F, 0.0F,
                 0.0F, 0.0F, 1.0F, -1.0F,
-                0.0F, 0.0F, -2.0F * 0.05F, FOVModifier};
+                0.0F, 0.0F, -2.0F * 0.05F, FOVModifier};*/
 
         static {
-            getUnsafe();
+            try {
+                Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+                theUnsafe.setAccessible(true);
+                UNSAFE = (Unsafe) theUnsafe.get(null);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+
+
         }
 
 
-        private static void __gluMakeIdentityf() {
+       /* private static void __gluMakeIdentityf() {
 //        int oldPos = matrix.position();
 //        matrix;
             matrix.rewind().put(IDENTITY_MATRIX, 0, IDENTITY_MATRIX.length);
         }
-
-        public static void gluPerspective(float aspect, float zFar, float zNear) {
-            /*if (deltaZ != 0.0F && sine != 0.0F && aspect != 0.0F)*/
+*/
+       /* public static void gluPerspective(float aspect, float zFar, float zNear) {
+            *//*if (deltaZ != 0.0F && sine != 0.0F && aspect != 0.0F)*//*
             {
 //                        __gluMakeIdentityf();
                 INCBUF.rewind().put(IDENTITY_MATRIX, 0, IDENTITY_MATRIX.length);
@@ -60,9 +65,9 @@ public final class GLU2 {
                 INCBUF.put(IDENTITY_MATRIX, 0, IDENTITY_MATRIX.length);
                 glMultMatrix(INCBUF);
             }
-        }
+        }*/
 
-        private static void glMultMatrix(float[] a) {
+       /* private static void glMultMatrix(float[] a) {
             GL30.nglMultMatrixf(getPointer(matrix.put(0, a)));
         }
 
@@ -70,11 +75,11 @@ public final class GLU2 {
             modView.rewind();
             GL30.nglMultMatrixf(getPointer(modView));
 //        modView.rewind();
-        }
+        }*/
 
-        public static long getPointer(Object obj) {
+       /* public static long getPointer(Object obj) {
             return UNSAFE.getLong(obj, offset);
-        }
+        }*/
         public static long getPointer(Object obj, long offset) {
             return UNSAFE.getLong(obj, offset);
         }public static long getPointer(long offset) {
@@ -94,21 +99,8 @@ public final class GLU2 {
             return UNSAFE.allocateMemory(a);
         }
 
-        private static void getUnsafe() {
-
-            try {
-                Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-                theUnsafe.setAccessible(true);
-                UNSAFE = (Unsafe) theUnsafe.get(null);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
-
-
-        }
-
         //todo: Might be posible to use X Orientation as the xasis argmnt as a varyin Axis
-        public static void glRotatef(float w, float x, float y, float z) {
+        /*public static void glRotatef(float w, float x, float y, float z) {
             w /= 100D;
             double n = Math.sqrt(y * y * w * w);
 //        n/=2.0D;
@@ -116,9 +108,9 @@ public final class GLU2 {
 //        w/=n;
 //        w/=100F;
 
-            float a = (float) (/*2**/n * Math.acos(w));
+            float a = (float) (*//*2**//*n * Math.acos(w));
             float r = (float) Math.acos(y);
-            float r2 = (float) Math.atan(w * n/**a/*2*/);
+            float r2 = (float) Math.atan(w * n*//**a/*2*//*);
 //        w*=r;
             float c = (float) Math.cos(w * y);
             float s = (float) Math.sin(w * y);
@@ -142,25 +134,25 @@ public final class GLU2 {
 //        MATRIX[8] = -s;
 //        MATRIX[10] = c;
 //        MODView.put(MATRIX);
-       /* MATRIX[0] = y;
+       *//* MATRIX[0] = y;
 //        MATRIX[1] = (float) (y*x*s * c);
 //        MATRIX[1] = (float) (y*x - c-z*s);
         MATRIX[1] = y - c * s;
-        MATRIX[2] = *//*s + y **//*COTANGENT* c;
+        MATRIX[2] = *//**//*s + y **//**//*COTANGENT* c;
 
         MATRIX[3]= (1);
         MATRIX[7]= (float) (w/n/100);
-        MATRIX[11]= (1);*/
+        MATRIX[11]= (1);*//*
 
 //
 //        MATRIX[4] = x * y - c - z * s;
 //        MATRIX[5] = y * y - c + c;
 //        MATRIX[6] = y * z - c + x * s;
 //
-            /* MATRIX[8] =  *//*-s + y **//* COTANGENT*-c;
+            *//* MATRIX[8] =  *//**//*-s + y **//**//* COTANGENT*-c;
 //        MATRIX[9] = -(y * z - c - x * s);
         MATRIX[9] =  y - c * s;
-        MATRIX[10] = y;*/
+        MATRIX[10] = y;*//*
 
 //        GL11.glPopMatrix();
 
@@ -224,10 +216,10 @@ public final class GLU2 {
 //                0.0f, 0.0f, 0.0f, 1.0f);
             glMultMatrix(MODView);
 //        GL11.glRotatef(w,x,y,z);
-        }
+        }*/
 
 
-        public static void glLightfv(int i, int i1, FloatBuffer func_1156_a) {
+       /* public static void glLightfv(int i, int i1, FloatBuffer func_1156_a) {
             GL11.nglLightfv(i, i1, getPointer(func_1156_a));
         }
 
@@ -249,7 +241,7 @@ public final class GLU2 {
 
         public static void glCallLists(IntBuffer buffer) {
             GL11.nglCallLists(buffer.mark().limit(), GL11.GL_UNSIGNED_INT, getPointer(buffer));
-        }
+        }*/
 
         public static void memcpy2(float[] vertices, long handle, long l)
         {
