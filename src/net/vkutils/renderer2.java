@@ -23,6 +23,7 @@ final class renderer2 {
 
 
 //            for (int i =0; i< Renderer.MAX_FRAMES_IN_FLIGHT;i++)
+        glfwPostEmptyEvent();
         vkDeviceWaitIdle(device);
 //            vkWaitForFences(Queues.device, Renderer.vkFence, true, 1000000000);
 
@@ -136,7 +137,10 @@ final class renderer2 {
         //        private static final long pFences;
 
 
-        private static final long VkPresentInfoKHR1;
+        // Align address to the specified alignment
+
+
+        private static final long VkPresentInfoKHR1 = MemSysm.malloc(VkPresentInfoKHR.SIZEOF);
         public static long frps;
         static int i;
         //static int FenceStat;
@@ -173,28 +177,25 @@ final class renderer2 {
 //                    pFences = memAddress0(longs2);
                     // Align address to the specified alignment
 //                    long address = (stack.stack().getAddress() + stack.stack().getPointer() - 8) & -8L;
-                    long address21 = MemSysm.malloc(VkSubmitInfo.SIZEOF);//(ncalloc());
-                    VkSubmitInfo.nsType(address21, VK_STRUCTURE_TYPE_SUBMIT_INFO);
-                    VkSubmitInfo.nwaitSemaphoreCount(address21, 1);
-                    VkSubmitInfo.npNext(address21, NULL);
+                    address2 = MemSysm.malloc(VkSubmitInfo.SIZEOF)+ VkSubmitInfo.STYPE;//(ncalloc());
+                    VkSubmitInfo.nsType(address2, VK_STRUCTURE_TYPE_SUBMIT_INFO);
+                    VkSubmitInfo.nwaitSemaphoreCount(address2, 1);
+                    VkSubmitInfo.npNext(address2, NULL);
 
                     stack2.setPointer((stack2.getPointer() - 8));
 
-                    memPutLong(address21 + VkSubmitInfo.PWAITSEMAPHORES, memAddress0(memLongBuffer((stack2.getPointerAddress()), 1).put(0, AvailableSemaphore)));
-                    memPutLong(address21 + VkSubmitInfo.PWAITDSTSTAGEMASK, memAddress0(stack2.ints(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT)));
-                    memPutLong(address21 + VkSubmitInfo.PSIGNALSEMAPHORES, GLU2.theGLU.getPointer(FinishedSemaphore, 8));
-                    address2 = address21 + VkSubmitInfo.STYPE;
-                    Memsys2.free(address2);
-                    // Align address to the specified alignment
+                    memPutLong(address2 + VkSubmitInfo.PWAITSEMAPHORES, memAddress0(memLongBuffer((stack2.getPointerAddress()), 1).put(0, AvailableSemaphore)));
+                    memPutLong(address2 + VkSubmitInfo.PWAITDSTSTAGEMASK, memAddress0(stack2.ints(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT)));
+                    memPutLong(address2 + VkSubmitInfo.PSIGNALSEMAPHORES, GLU2.theGLU.getPointer(FinishedSemaphore, 8));
+                    MemSysm.Memsys2.free(address2);
 
 
-                    VkPresentInfoKHR1 = MemSysm.malloc(VkPresentInfoKHR.SIZEOF);
                     //memSet(VkPresentInfoKHR1, 0, VkPresentInfoKHR.SIZEOF);
                     VkPresentInfoKHR.nsType(VkPresentInfoKHR1, VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
                     memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PWAITSEMAPHORES, (AvailableSemaphore[0]));
                     memPutInt(VkPresentInfoKHR1 + VkPresentInfoKHR.SWAPCHAINCOUNT, 1);
-                    memPutLong(address21 + VkSubmitInfo.PCOMMANDBUFFERS, (pointerBuffer));
-                    VkSubmitInfo.ncommandBufferCount(address21, 1);
+                    memPutLong(address2 + VkSubmitInfo.PCOMMANDBUFFERS, (pointerBuffer));
+                    VkSubmitInfo.ncommandBufferCount(address2, 1);
                     memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PIMAGEINDICES, address3);
                     memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PSWAPCHAINS, memAddress0(memLongBuffer(stack2.getAddress(), 1).put(0, VkUtils2.SwapChainSupportDetails.swapChain)));
                     //nmemFree(VkPresentInfoKHR1);
@@ -202,8 +203,9 @@ final class renderer2 {
 //                    memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PWAITSEMAPHORES, (AvailableSemaphore));
 //                    memPutInt(VkPresentInfoKHR1 + VkPresentInfoKHR.SWAPCHAINCOUNT, 1);
                     // Align address to the specified alignment
-                    VkSubmitInfo.validate(address21);
+                    VkSubmitInfo.validate(address2);
                     VkPresentInfoKHR.validate(VkPresentInfoKHR1);
+                    MemSysm.Memsys2.free(VkPresentInfoKHR1);
 
                     System.out.println(MemSysm.tracker);
 
@@ -251,11 +253,9 @@ final class renderer2 {
 
                 i += nvkAcquireNextImageKHR(device, VkUtils2.SwapChainSupportDetails.swapChain[0], TmUt, AvailableSemaphore[0], VK_NULL_HANDLE, address3);
 
+                renderer2.UniformBufferObject.updateUniformBuffer(renderer2.Renderer2.currentFrame);
 
-                UniformBufferObject.updateUniformBuffer(currentFrame);
-
-
-//                 PipeLine.imagesInFlight.get(PipeLine.currentFrame);
+//                PipeLine.imagesInFlight.get(PipeLine.currentFrame);
                 //Wait frames
 
 //                    imagesInFlight[PipeLine.currentFrame]= (PipeLine.currentFrame);
@@ -291,12 +291,6 @@ final class renderer2 {
             }
         }
 
-        public static void handleInputs()
-        {
-            //todo: need to thritile/manage to fixed branchless Tockrate to avoid excess Polling.Buffering./Overehad
-            glfwPollEvents();
-
-        }
     }
 
 
@@ -365,10 +359,10 @@ final class renderer2 {
 
 
         static long graphicsPipeline;
-        private static long beginInfo1;
+        private static VkCommandBufferBeginInfo beginInfo1;
         private static VkRenderPassBeginInfo renderPassInfo;
         private static final VkSubmitInfo submitInfo1 = VkSubmitInfo.create(MemSysm.calloc(1,VkSubmitInfo.SIZEOF))//VkUtils2.MemSysm.nmalloc(VkSubmitInfo.ALIGNOF, VkSubmitInfo.SIZEOF);
-                .sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+                .sType$Default();
         private static final long vkMemoryRequirements = MemSysm.mallocM(1, VkMemoryRequirements.SIZEOF);
 
         static
@@ -391,18 +385,18 @@ final class renderer2 {
             //Do VBO/Poriton.chunk offset relatine to current.relative position instea dof need ing to verificy.ascertain Pos.Coords dierct
 
 
-            setBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, value, vertexBuffer);
+            setBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, value, vertexBuffer, VK_SHARING_MODE_EXCLUSIVE);
             createBuffer(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
-            setBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, value, stagingBuffer);
+            setBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, value, stagingBuffer, VK_SHARING_MODE_EXCLUSIVE);
             createBuffer(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-            setBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, Short.BYTES * indices.length, indexBuffer);
+            setBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, Short.BYTES * indices.length, indexBuffer, VK_SHARING_MODE_EXCLUSIVE);
             createBuffer(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
         }
 
-        public static void createCommandBuffers() {
-            VkCommandBufferAllocateInfo allocateInfo = VkCommandBufferAllocateInfo.create(MemSysm.malloc(VkCommandBufferAllocateInfo.SIZEOF))
+        static void createCommandBuffers() {
+            VkCommandBufferAllocateInfo allocateInfo = VkCommandBufferAllocateInfo.create(MemSysm.calloc(1,VkCommandBufferAllocateInfo.SIZEOF))
                     .sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
             .commandPool(getRef())
             .level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
@@ -419,26 +413,33 @@ final class renderer2 {
 //            commandBuffers[2]=new VkCommandBuffer(descriptorSets[1], device);
 
 
-            beginInfo1 = MemSysm.calloc(1, VkCommandBufferBeginInfo.SIZEOF);
-            VkCommandBufferBeginInfo.nsType(beginInfo1, VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-            VkCommandBufferBeginInfo.nflags(beginInfo1, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
+            beginInfo1 = VkCommandBufferBeginInfo.create(MemSysm.calloc(1,VkCommandBufferBeginInfo.SIZEOF)).sType$Default()
+                    .flags(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
-            renderPassInfo = VkRenderPassBeginInfo.create(MemSysm.malloc(VkRenderPassBeginInfo.SIZEOF)).sType$Default();
-            renderPassInfo
-//                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
-                    .renderPass(VkUtils2.SwapChainSupportDetails.renderPass[0]);
-            VkRect2D renderArea = VkRect2D.calloc(VkUtils2.MemSys.stack())
+            VkRenderPassAttachmentBeginInfo vkRenderPassAttachmentBeginInfo = VkRenderPassAttachmentBeginInfo.create(MemSysm.malloc(VkRenderPassAttachmentBeginInfo .SIZEOF))
+                    .sType$Default();
+            VkRect2D renderArea = VkRect2D.create(MemSysm.malloc(VkRect2D.SIZEOF))
                     .offset(set)
                     .extent(VkUtils2.SwapChainSupportDetails.swapChainExtent);
-            renderPassInfo.renderArea(renderArea);
 
             //todo: multiple attachments with VK_ATTACHMENT_LOAD_OP_CLEAR: https://vulkan-tutorial.com/en/Depth_buffering#page_Clear-values
 
-            VkClearValue.Buffer clearValues = VkClearValue.create(MemSysm.malloc(VkClearValue.SIZEOF), 2);
+            VkClearValue.Buffer clearValues = VkClearValue.create(MemSysm.calloc(2,VkClearValue.SIZEOF), 2);
             clearValues.get(0).color().float32(VkUtils2.MemSys.stack().floats(0.0f, 0.0f, 0.0f, 1.0f));
             clearValues.get(1).depthStencil().set(1.0f, 0);
-            memPutLong(renderPassInfo.address() + VkRenderPassBeginInfo.PCLEARVALUES, clearValues.address0());
-            VkRenderPassBeginInfo.nclearValueCount(renderPassInfo.address(), clearValues.remaining());
+
+
+            renderPassInfo = VkRenderPassBeginInfo.create(MemSysm.malloc(VkRenderPassBeginInfo.SIZEOF))
+                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
+                    .pNext(vkRenderPassAttachmentBeginInfo)
+                    .pClearValues(clearValues)
+                    .renderPass(VkUtils2.SwapChainSupportDetails.renderPass[0])
+                    .renderArea(renderArea);
+
+
+
+//            memPutLong(renderPassInfo.address() + VkRenderPassBeginInfo.PCLEARVALUES, clearValues.address0());
+//            VkRenderPassBeginInfo.nclearValueCount(renderPassInfo.address(), clearValues.remaining());
 
             //todo: Mmeory addres sranegs for Uniform bufefrs are opened here propr to the vkCMD Command Buffer records in an attempt to potenetial. reuce overal
             /*todo: Performance Hack: allow Memepry to be premptively mapped prior to FUll Initialisation/Drawing/rendering/Setup/prior to VKCOmmand Buffer recording to allow to avoid overhead/adiitonal when attem0ng to modifey vertex.Buffer data when itilsied and Mapped to a specific memry range(s),
@@ -462,7 +463,7 @@ final class renderer2 {
         private static void extracted(int i)
         {
             VkCommandBuffer commandBuffer = commandBuffers[i];
-            nvkBeginCommandBuffer(commandBuffer, beginInfo1);
+            vkBeginCommandBuffer(commandBuffer, beginInfo1);
 
 
             renderPassInfo.framebuffer(VkUtils2.SwapChainSupportDetails.swapChainFramebuffers[i]);
@@ -491,7 +492,7 @@ final class renderer2 {
                 // The unsigned conversion helps the JIT produce code that is as fast as if int was returned.
                 nvkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkLayout[0], 0, 1, (pointerBuffer), 0, 0);
                 vkCmdDrawIndexed(commandBuffer, indices.length, 1, 0, 0, 0);
-                Memsys2.free8(pointerBuffer);
+                MemSysm.Memsys2.free8(pointerBuffer);
 
 
             }
@@ -510,20 +511,20 @@ final class renderer2 {
         public static void doPointerAllocS(Pointer.Default allocateInfo, long vkAllocateDescriptorSets, long[] descriptorSets) {
 
             callPPPI(device.address(), allocateInfo.address(), descriptorSets, vkAllocateDescriptorSets);
-            Memsys2.free(allocateInfo);
+            MemSysm.Memsys2.free(allocateInfo);
 //            return address;
 
         }
 
         //todo: need to do thsi seperately from createBuffer as Java cannot handle references/pointrs by default and the buffre must be a field due to the bindVertexBuffers call needing acces to teh same VertexBuffer that is cerated, and a methdo/upu cannto return multiple variables/refercnes/valeus at teh same time
-        static void setBuffer(int usage, int size, long[] a) {
+        static void setBuffer(int usage, int size, long[] a, int sharingMode) {
             VkBufferCreateInfo allocateInfo = VkBufferCreateInfo.create(MemSysm.malloc(VkBufferCreateInfo.SIZEOF))
                     .sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
             .size(size)
             .usage(usage)
-            .sharingMode(VK_SHARING_MODE_EXCLUSIVE);
+            .sharingMode(sharingMode);
 
-            Memsys2.doPointerAllocSafe2(allocateInfo, capabilities.vkCreateBuffer, a);
+            MemSysm.Memsys2.doPointerAllocSafe2(allocateInfo, capabilities.vkCreateBuffer, a);
             //nmemFree(allocateInfo);
         }
 
@@ -535,7 +536,7 @@ final class renderer2 {
             .usage(usage)
             .sharingMode(VK_SHARING_MODE_EXCLUSIVE);
             //nmemFree(allocateInfo);
-            Memsys2.free(allocateInfo);
+            MemSysm.Memsys2.free(allocateInfo);
             return MemSysm.doPointerAllocSafe(allocateInfo, capabilities.vkCreateBuffer);
         }
 
@@ -551,7 +552,7 @@ final class renderer2 {
             .allocationSize(VkMemoryRequirements.nsize(vkMemoryRequirements))
             .memoryTypeIndex(findMemoryType(VkMemoryRequirements.nmemoryTypeBits(vkMemoryRequirements), properties));
 //            nmemFree(vkMemoryRequirements);
-            Memsys2.doPointerAllocSafe2(allocateInfo1, capabilities.vkAllocateMemory, vertexBufferMemory);
+            MemSysm.Memsys2.doPointerAllocSafe2(allocateInfo1, capabilities.vkAllocateMemory, vertexBufferMemory);
 //            nmemFree(allocateInfo1);
 
             vkBindBufferMemory(device, currentBuffer[0], vertexBufferMemory[0], 0);
@@ -563,7 +564,7 @@ final class renderer2 {
             vkGetPhysicalDeviceMemoryProperties(VkUtils2.Queues.physicalDevice, memProperties);
             for (int i = 0; i < memProperties.memoryTypeCount(); i++) {
                 if ((typeFilter & (1 << i)) != 0 && (memProperties.memoryTypes(i).propertyFlags() & properties) == properties) {
-                    Memsys2.free(memProperties);
+                    MemSysm.Memsys2.free(memProperties);
                     return i;
                 }
             }
@@ -580,7 +581,7 @@ final class renderer2 {
                     .sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
             .allocationSize(VkMemoryRequirements.nsize(vkMemoryRequirements))
             .memoryTypeIndex(findMemoryType(VkMemoryRequirements.nmemoryTypeBits(vkMemoryRequirements), VK_MEMORY_PROPERTY_HOST_CACHED_BIT));
-            Memsys2.doPointerAllocSafe2(allocateInfo1, capabilities.vkAllocateMemory, vertexBufferMemory);
+            MemSysm.Memsys2.doPointerAllocSafe2(allocateInfo1, capabilities.vkAllocateMemory, vertexBufferMemory);
 
             vkBindBufferMemory(device, currentBuffer, vertexBufferMemory[0], 0);
 
@@ -670,11 +671,11 @@ final class renderer2 {
 
             nvkQueueSubmit(VkUtils2.Queues.graphicsQueue, 1, submitInfo1.address(), VK_NULL_HANDLE);
             JNI.callPI(VkUtils2.Queues.graphicsQueue.address(), VkUtils2.Queues.graphicsQueue.getCapabilities().vkQueueWaitIdle);
-            Memsys2.free(pointers);
+            MemSysm.Memsys2.free(pointers);
             nvkFreeCommandBuffers(device, commandPool[0], 1, pointers);
         }
 
-        static void createDescriptorSetLayout() {
+          static void createDescriptorSetLayout() {
              {
                  VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.create(MemSysm.malloc(VkDescriptorSetLayoutBinding.SIZEOF), 2);
                /*  long[] bindings = {
@@ -718,11 +719,11 @@ final class renderer2 {
                  //VkUtils2.MemSysm.free(a);
 //                 nmemFree(a);
 //                 memFree(bindings);
-                 Memsys2.doPointerAllocSafe2(a, device.getCapabilities().vkCreateDescriptorSetLayout, UniformBufferObject.descriptorSetLayout);
+                 MemSysm.Memsys2.doPointerAllocSafe2(a, device.getCapabilities().vkCreateDescriptorSetLayout, UniformBufferObject.descriptorSetLayout);
             }
         }
 
-        static void createVertexBufferStaging() {
+         static void createVertexBufferStaging() {
 
 
     //            nvkMapMemory(Queues.device, stagingBufferMemory, 0, value, 0, address);
@@ -731,7 +732,7 @@ final class renderer2 {
 
             nvkMapMemory(device, stagingBufferMemory[0], 0, value, 0, MemSysm.address);
             {
-                GLU2.theGLU.memcpy2(vertices, MemSysm.getHandle(), ((long) (vertices.length << 2)) & 0xffffffffL);
+                GLU2.theGLU.memcpy2(vertices, MemSysm.getHandle(), (vertices.length << 2));
                 //                GLU2.theGLU.wrap()
 
             }
@@ -744,7 +745,7 @@ final class renderer2 {
 
         }
 
-        public static void createIndexBuffer() {
+        static void createIndexBuffer() {
 
             nvkMapMemory(device, stagingBufferMemory[0], 0, size, 0, MemSysm.address);
             {
@@ -767,13 +768,13 @@ final class renderer2 {
 
         }
 
-        public static void creanupBufferStaging() {
+        static void creanupBufferStaging() {
             vkDestroyBuffer(device, stagingBuffer[0], VkUtils2.MemSys.pAllocator());
             vkFreeMemory(device, stagingBufferMemory[0], VkUtils2.MemSys.pAllocator());
         }
     }
 
-    public static final class UniformBufferObject
+    static final class UniformBufferObject
     {
 
 //        private static final Matrix4f model = new Matrix4f().identity().determineProperties();
@@ -796,6 +797,7 @@ final class renderer2 {
         private static final float zFar = 40.0f;
 
         private static final float zNear = 1.8f;
+        private static int i=0;
 
         static {
             Matrix4f proj = new Matrix4f().identity().determineProperties().identity().m00(1.0f / (h * (VkUtils2.SwapChainSupportDetails.swapChainExtent.width() / (float) VkUtils2.SwapChainSupportDetails.swapChainExtent.height())))
@@ -829,6 +831,11 @@ final class renderer2 {
 
         private static void updateUniformBuffer(int pImageIndex)
         {
+
+           if(pImageIndex%2==0)
+           {
+               return;
+           }
 
             double angle = (glfwGetTime()*aFloat);
 
@@ -877,8 +884,8 @@ final class renderer2 {
         private static void memcpy(long handle)
         {
 //            abs.getToAddress(handle);
-            memFloatBuffer(handle, proj2.length).put(proj2);
-//            GLU2.theGLU.memcpy2(UniformBufferObject.proj2, handle, (long) UniformBufferObject.proj2.length <<2);
+//            memFloatBuffer(handle, proj2.length).put(proj2);
+            GLU2.theGLU.memcpy2(UniformBufferObject.proj2, handle, UniformBufferObject.proj2.length <<2);
         }
 
         static void createDescriptorPool() {
@@ -897,7 +904,7 @@ final class renderer2 {
 //                        .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO)
                         .pPoolSizes(poolSize)
                         .maxSets(VkUtils2.PipeLine.swapChainImages.length);
-                Memsys2.doPointerAllocSafe2(poolCreateInfo, device.getCapabilities().vkCreateDescriptorPool, descriptorPool);
+                MemSysm.Memsys2.doPointerAllocSafe2(poolCreateInfo, device.getCapabilities().vkCreateDescriptorPool, descriptorPool);
 //               descriptorPool=aLong[0];
             }
         }
@@ -927,12 +934,12 @@ final class renderer2 {
                         .imageView(textureImageView[0])
                         .sampler(textureSampler[0]);
 
-                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.create(MemSysm.calloc(2, VkWriteDescriptorSet.SIZEOF),2).sType$Default();
+                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.create(MemSysm.calloc(2, VkWriteDescriptorSet.SIZEOF),2);
 
                 VkWriteDescriptorSet vkWriteDescriptorSet = descriptorWrites.get(0).sType$Default()
 //                        .sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
                         .dstBinding(0)
-                        .dstArrayElement(0)
+//                        .dstArrayElement(0)
                         .descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
                         .descriptorCount(1)
                         .pBufferInfo(bufferInfo);
@@ -940,7 +947,7 @@ final class renderer2 {
                 VkWriteDescriptorSet samplerDescriptorWrite = descriptorWrites.get(1).sType$Default()
 //                        .sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
                         .dstBinding(1)
-                        .dstArrayElement(0)
+//                        .dstArrayElement(0)
                         .descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
                         .descriptorCount(1)
                         .pImageInfo(imageInfo);
@@ -961,7 +968,7 @@ final class renderer2 {
 //                    descriptorSets[i]=descriptorSet;
 
                 }
-                Memsys2.free(bufferInfo);
+                MemSysm.Memsys2.free(bufferInfo);
 //                System.arraycopy(pDescriptorSets, 0, descriptorSets, 0, pDescriptorSets.length);
             }
         }

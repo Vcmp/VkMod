@@ -6,30 +6,30 @@ import org.lwjgl.system.JNI;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.Pointer;
 import org.lwjgl.system.jemalloc.JEmalloc;
-import org.lwjgl.vulkan.VkAllocationCallbacks;
-import org.lwjgl.vulkan.VkMemoryRequirements;
+import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
 
+import static org.lwjgl.system.JNI.callPJPPPI;
 import static org.lwjgl.system.JNI.callPPPPI;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.vulkan.VK10.VK_NOT_READY;
 import static org.lwjgl.vulkan.VK10.VK_TIMEOUT;
 import static vkutils.VkUtils2.Queues.device;
 
-public final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*implements MemoryAllocator*/ {
+final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*implements MemoryAllocator*/ {
 
 //    protected static final VkAllocationCallbacks pAllocator = null;
     //int m = JEmalloc.je_mallctl()
     static final long[] pDummyPlacementPointerAlloc = {0};
     static long stacks;
     static final HashMap<Long, Long> tracker= new HashMap<>();
-    static  long address = JEmalloc.nje_mallocx(128, 0);//nmemAllocChecked(Pointer.POINTER_SIZE);
-    static final LongBuffer removed = memLongBuffer(address+128L, 64);
+    static  long address = JEmalloc.nje_mallocx(1, 0);//nmemAllocChecked(Pointer.POINTER_SIZE);
+
     //static final long MemMainAllC = JEmalloc.nje_mallocx(128, 0);
-    static void checkCall(int callPPPPI)
+     private static void checkCall(int callPPPPI)
     {
         switch (callPPPPI)
         {
@@ -60,7 +60,7 @@ public final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator)
             System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
 
         }
-        System.out.println("AllocatingC: " + size + " With Capacity: " + num + "Addr: " + l+" Total Allocations : "+stacks);
+        System.out.println("AllocatingC: " + size + " With Capacity: " + num + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
         stacks += size;
         tracker.put(l, size);
         return l;
@@ -70,9 +70,9 @@ public final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator)
     private static boolean contains(long l)
     {
         //removed.rewind();
-        for (int i=0; i< removed.limit(); i++)
+        for (int i = 0; i< Memsys2.removed.limit(); i++)
         {
-            if(removed.get(i)==l)
+            if(Memsys2.removed.get(i)==l)
                 return true;
         }
         return false;
@@ -119,7 +119,7 @@ public final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator)
     public static long mallocLongPtr(long descriptorSets)
     {
         System.out.println("AllocatingL: "+descriptorSets+" Total Allocations : "+stacks+"  "+Thread.currentThread().getStackTrace()[2]);
-        long s = JEmalloc.nje_calloc(1, 8);
+        long s = JEmalloc.nje_malloc(1);
         tracker.put(s, descriptorSets);
         stacks+=8;
         System.out.println("Allocated: "+s);
@@ -153,7 +153,7 @@ public final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator)
 
     static long doPointerAllocSafeExtrm(long allocateInfo, long vkCreateBuffer) {
         //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator(), pVertexBufferMemory);
-        Memsys2.free(allocateInfo);
+//        Memsys2.free(allocateInfo);
         System.out.println("Attempting to Call: ->"+ memGetLong(allocateInfo));
         Checks.check(allocateInfo);
         checkCall(callPPPPI(device.address(), allocateInfo, NULL, pDummyPlacementPointerAlloc, vkCreateBuffer));
@@ -190,6 +190,13 @@ public final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator)
         return pDummyPlacementPointerAlloc[0];
     }
 
+    static long doPointerAlloc5L(VkDevice device, VkGraphicsPipelineCreateInfo.Buffer pipelineInfo)
+    {
+        Checks.check(pipelineInfo.address0());
+        checkCall(callPJPPPI(device.address(), VK10.VK_NULL_HANDLE, pipelineInfo.remaining(), pipelineInfo.address0(), NULL, pDummyPlacementPointerAlloc, renderer2.Buffers.capabilities.vkCreateGraphicsPipelines));
+        return pDummyPlacementPointerAlloc[0];
+    }
+
     public long nmalloc(int a)
     {
         return stack.nmalloc(Pointer.POINTER_SHIFT, a);   //stack.ncalloc(Pointer.POINTER_SHIFT, a,  Pointer.POINTER_SIZE);
@@ -206,69 +213,88 @@ public final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator)
 //        return nmemCallocChecked(1, 8);
     }
 
-    public long nmalloc(int alignof, int sizeof)
-    {
-        return stack.nmalloc(alignof, sizeof);
+     static final class Memsys2 {
+
+         private static final LongBuffer removed = memLongBuffer(address+64L, 64);
+
+         static void doPointerAllocSafe2(Pointer allocateInfo, long vkCreateBuffer, long[] a)
+        {
+            //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
+            free(allocateInfo);
+            System.out.println("Attempting to Call: ->" + allocateInfo);
+            Checks.check(allocateInfo.address());
+            checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, a, vkCreateBuffer));
+        }
+
+        static void free(@NotNull Pointer ptr)
+        {
+            final long orDefault = tracker.getOrDefault(ptr.address(), 0L);
+            final long stacks = memGetLong(ptr.address());//+ orDefault;
+            if (stacks == 0 || orDefault == 0) {
+                throw new UnsupportedOperationException("Warn: Don't Need to free!: " + ptr + "" + ptr.address());
+            }
+            System.out.println("            Freeing: ->" + ptr + "Size: " + stacks + " Addr: " + ptr.address() + "Current allocations: " + MemSysm.stacks);
+            MemSysm.stacks -= stacks;
+            JEmalloc.nje_free(ptr.address());
+            tracker.remove(ptr.address());
+            removed.put(ptr.address());
+        }
+
+        public static void free(long ptr)
+        {
+            final long orDefault = tracker.getOrDefault(ptr, 0L);
+            final long stacks = memGetLong(ptr);
+            if (orDefault == 0) {
+                throw new UnsupportedOperationException("Warn: Don't Need to free!: " + ptr);
+            }
+            if (stacks == 0) {
+                System.err.println("WARN: Is not Allocated Object!");
+            }
+            System.out.println("Freeing: " + ptr + "Size: " + stacks + "Current allocations: " + MemSysm.stacks);
+            MemSysm.stacks -= stacks;
+            JEmalloc.nje_free(ptr);
+            tracker.remove(ptr);
+            removed.put(ptr);
+        }
+
+        public static void free8(long ptr)
+        {
+            final long stacks = tracker.getOrDefault(memGetLong(ptr), 0L);
+            System.out.println("FreeingL: " + ptr + "Size: " + stacks + "Current allocations: " + MemSysm.stacks);
+            MemSysm.stacks -= 8;
+            removed.put(ptr);
+            JEmalloc.nje_free(ptr);
+        }
+
+        public static void free(ByteBuffer ptr)
+        {
+            final long orDefault = tracker.getOrDefault(memAddress0(ptr), 0L);
+            final long stacks = memGetLong(memAddress0(ptr));//+ orDefault;
+
+            if (stacks == 0 || orDefault == 0) {
+                throw new UnsupportedOperationException("Warn: Don't Need to free!: " + ptr + "" + memAddress0(ptr));
+            }
+            JEmalloc.je_free(ptr);
+        }
+
+       /* @Override
+        public boolean equals(Object obj)
+        {
+            return obj == this || obj != null && obj.getClass() == this.getClass();
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return 1;
+        }
+
+        @Override
+        public String toString()
+        {
+            return "Memsys2[]";
+        }*/
+
+
     }
-
-
-    public long getMalloc()
-    {
-        return 0;
-    }
-
-
-    public long getCalloc()
-    {
-        return 0;
-    }
-
-
-    public long getRealloc()
-    {
-        return 0;
-    }
-
-
-    public long getFree()
-    {
-        return 0;
-    }
-
-
-    public long getAlignedAlloc()
-    {
-        return 0;
-    }
-
-
-    public long getAlignedFree()
-    {
-        return 0;
-    }
-
-
-    /* public long malloc(long num, long size)
-    {
-        return LibCStdlib.nmalloc((size));//memAddress0(LibCStdlib.malloc(size));
-    }*/
-
-
-    public long realloc(long ptr, long size)
-    {
-        return 0;
-    }
-
-
-    public long aligned_alloc(long alignment, long size)
-    {
-        return 0;
-    }
-
-
-    public void aligned_free(long ptr)
-    {
-
-    }
-
 }

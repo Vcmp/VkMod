@@ -5,10 +5,10 @@ import sun.misc.Unsafe;
 import java.lang.reflect.Field;
 
 public final class GLU2 {
-    
+
     public static final class theGLU {
 
-        private static Unsafe UNSAFE;
+        private static final Unsafe UNSAFE;
 
 
        /* public static final FloatBuffer MODView = BufferUtils.createFloatBuffer(0x1FFFFF);
@@ -35,15 +35,21 @@ public final class GLU2 {
                 0.0F, 0.0F, -2.0F * 0.05F, FOVModifier};*/
 
         static {
+            UNSAFE=extracted();
+
+
+        }
+
+        private static Unsafe extracted()
+        {
             try {
                 Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
                 theUnsafe.setAccessible(true);
-                UNSAFE = (Unsafe) theUnsafe.get(null);
+                return (Unsafe) theUnsafe.get(null);
             } catch (NoSuchFieldException | IllegalAccessException e) {
                 e.printStackTrace();
             }
-
-
+            return null;
         }
 
 
@@ -243,7 +249,7 @@ public final class GLU2 {
             GL11.nglCallLists(buffer.mark().limit(), GL11.GL_UNSIGNED_INT, getPointer(buffer));
         }*/
 
-        public static void memcpy2(float[] vertices, long handle, long l)
+        public static void memcpy2(float[] vertices, long handle, int l)
         {
             UNSAFE.copyMemory(vertices, 16, null, handle, l);
         }
