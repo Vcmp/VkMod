@@ -9,6 +9,7 @@ import org.lwjgl.system.jemalloc.JEmalloc;
 import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
 
@@ -184,7 +185,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     static long doPointerAllocSafe(@NotNull Pointer allocateInfo, long vkCreateBuffer) {
         //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator(), pVertexBufferMemory);
         //Memsys2.free(allocateInfo);
-        System.out.println("Attempting to CallS: ->"+allocateInfo);
+        System.out.println("Attempting to CallS: ->"+allocateInfo+"-->"+Thread.currentThread().getStackTrace()[2]);
         Checks.check(allocateInfo.address());
         checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, pDummyPlacementPointerAlloc, vkCreateBuffer));
         return pDummyPlacementPointerAlloc[0];
@@ -195,6 +196,14 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         Checks.check(pipelineInfo.address0());
         checkCall(callPJPPPI(device.address(), VK10.VK_NULL_HANDLE, pipelineInfo.remaining(), pipelineInfo.address0(), NULL, pDummyPlacementPointerAlloc, renderer2.Buffers.capabilities.vkCreateGraphicsPipelines));
         return pDummyPlacementPointerAlloc[0];
+    }
+
+    public static IntBuffer callocM(int sizeNum)
+    {
+        final ByteBuffer byteBuffer = JEmalloc.je_malloc(sizeNum);
+        final IntBuffer a = byteBuffer.asIntBuffer();
+        System.out.println("Allocating ByteBuf:"+memAddress0(byteBuffer)+   "As IntBuffer: "+memAddress0(a)+"Size: "+ sizeNum);
+        return a;
     }
 
     public long nmalloc(int a)
