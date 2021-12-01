@@ -3,6 +3,7 @@ package vkutils;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Math;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.system.JNI;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.Pointer;
@@ -101,9 +102,9 @@ final class renderer2 {
         //        private static final int[] imagesInFlight = new int[MAX_FRAMES_IN_FLIGHT];
         static final long[] AvailableSemaphore = {0};
         //        private static final long[] vkFenceA;
-        //static final long[] vkFence = {0};
+//        static final long[] vkFence = {0};
         private static final MemoryStack stack2 = VkUtils2.MemSys.stack();
-        private static final int MAX_FRAMES_IN_FLIGHT = 2;
+        private static final int MAX_FRAMES_IN_FLIGHT = 3;
 
 
         private static final long[] FinishedSemaphore = {0};
@@ -161,7 +162,7 @@ final class renderer2 {
                     //nmemFree(vkSemaphoreCreateInfo);
 
 //                    long vkFenceCreateInfo = doAbsCalloc(VkFenceCreateInfo.SIZEOF,VkFenceCreateInfo.ALIGNOF);
-                   /* long vkFenceCreateInfo = VkUtils2.MemSysm.ncalloc(VkFenceCreateInfo.SIZEOF);
+                    /*long vkFenceCreateInfo = VkUtils2.MemSys.ncalloc(VkFenceCreateInfo.SIZEOF);
                     VkFenceCreateInfo.nsType(vkFenceCreateInfo, VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
                     VkFenceCreateInfo.nflags(vkFenceCreateInfo, VK_FENCE_CREATE_SIGNALED_BIT);
                     MemSysm.doPointerAllocSafeExtrm2(vkFenceCreateInfo, device.getCapabilities().vkCreateFence, vkFence);*/
@@ -248,13 +249,16 @@ final class renderer2 {
 
             {
                 //Must Push andPop/Pop/Push at the Exact Currect Intervals
-                // i += JNI.callPPI(device.address(), vkFence.length, vkFence, device.getCapabilities().vkResetFences);
+//                 i += JNI.callPPI(device.address(), vkFence.length, vkFence, device.getCapabilities().vkResetFences);
 //                    i+= vkWaitForFences(device, vkFence, false, TmUt);
-
+                /*if(currentFrame!=frame)
+                {
+                    return;
+                }*/
                 i += nvkAcquireNextImageKHR(device, VkUtils2.SwapChainSupportDetails.swapChain[0], TmUt, AvailableSemaphore[0], VK_NULL_HANDLE, address3);
 
-                renderer2.UniformBufferObject.updateUniformBuffer(renderer2.Renderer2.currentFrame);
 
+                renderer2.UniformBufferObject.updateUniformBuffer(1);
 //                PipeLine.imagesInFlight.get(PipeLine.currentFrame);
                 //Wait frames
 
@@ -410,7 +414,7 @@ final class renderer2 {
             doPointerAllocS(allocateInfo, capabilities.vkAllocateCommandBuffers, descriptorSets);
             commandBuffers[0]=new VkCommandBuffer(descriptorSets[0], device);
             commandBuffers[1]=new VkCommandBuffer(descriptorSets[1], device);
-//            commandBuffers[2]=new VkCommandBuffer(descriptorSets[1], device);
+            commandBuffers[2]=new VkCommandBuffer(descriptorSets[2], device);
 
 
             beginInfo1 = VkCommandBufferBeginInfo.create(MemSysm.calloc(1,VkCommandBufferBeginInfo.SIZEOF)).sType$Default()
@@ -782,6 +786,8 @@ final class renderer2 {
 
         //        private static final Matrix4f model = new Matrix4f().identity().determineProperties();
         //private static final Matrix4f proj = new Matrix4f().identity().determineProperties();
+        private static final Matrix4f proj;//= new Matrix4f().identity();
+        private static final Matrix4f proj4= new Matrix4f().identity();
         private static final float[] proj2=new float[16];
         static final long[] descriptorSetLayout = {0};
         //        private static LongBuffer pDescriptorSetLayout;
@@ -797,22 +803,24 @@ final class renderer2 {
         static final long[] textureImageView = {0};
         static final long[] textureSampler = {0};
 
-        private static final float zFar = 40.0f;
+        private static final float zFar = 20.0f;
 
-        private static final float zNear = 1.8f;
+        private static final float zNear = 3.1f;
         private static int i=0;
 
         static {
-            Matrix4f proj = new Matrix4f().identity().determineProperties().identity().m00(1.0f / (h * (VkUtils2.SwapChainSupportDetails.swapChainExtent.width() / (float) VkUtils2.SwapChainSupportDetails.swapChainExtent.height())))
+            proj = new Matrix4f().identity().determineProperties().identity().m00(1.0f / (h * (VkUtils2.SwapChainSupportDetails.swapChainExtent.width() / (float) VkUtils2.SwapChainSupportDetails.swapChainExtent.height())))
                     .m11((1.0f / h) * -1)
                     .m22((zFar + zNear) / (zNear - zFar))
                     .m32((zFar + zFar) * zNear / (zNear - zFar))
                     .m23(-1.0f);
             proj.mulPerspectiveAffine(new Matrix4f().identity().determineProperties().setLookAt(2.0f, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f));
-            proj.translate(-5, -0, -5);
-            proj.get(proj2);
+            proj.translate(new Vector3f(-4, -4, -4));
+//            proj.get(proj2);
+
 //                proj2.put(proj3).re();
-            System.arraycopy(proj2, 0, proj3, 0, 16);
+
+//            System.arraycopy(proj2, 0, proj3, 0, 16);
 
         }
         //todo: Important: atcuall have to 'reset; or revert teh matrixces bakc to baseline.Idneitfy in order to atcually update te Unform Buffer(s) properly e.g. .etc i.e.
@@ -821,7 +829,7 @@ final class renderer2 {
 //            UniformBufferObject.proj.identity();
 
 
-        private static final double aFloat = Math.toRadians(90D);
+        private static final double aFloat = Math.toRadians(9D);
 
         public static void createUniformBuffers()
         {
@@ -832,22 +840,29 @@ final class renderer2 {
             }
         }
 
-        private static void updateUniformBuffer(int pImageIndex)
+        static void updateUniformBuffer(int pImageIndex)
         {
 
-            if(pImageIndex%2==0)
+            /*if(pImageIndex%2==0)
             {
                 return;
-            }
+            }*/
 
             double angle = (glfwGetTime()*aFloat);
 
             //            model.identity();
 //            System.arraycopy(proj3, 0, proj2, 0, proj2.length);
-            mulAffineL(
+           /* mulAffineL(
                     (float) Math.sin(angle),
                     (float) Math.cos(angle+Half_Pi)
-            );
+            );*/
+
+//            proj4.set(proj);
+
+//            proj4.determineProperties();
+            proj.rotateAffine((float) angle, 0, 0, 1, proj4);
+//                proj2.put(proj3).re();
+
             //._properties(Madtrix4fc.PROPERTY_AFFINE | Matrix4fc.PROPERTY_ORTHONORMAL);
 //            model.m00(cos).m01(sin).m10(-sin).m11(cos);//.mulOrthoAffine(proj);//._properties(Matrix4fc.PROPERTY_AFFINE | Matrix4fc.PROPERTY_ORTHONORMAL);
 //            abs.identity().mul(proj);
@@ -886,9 +901,9 @@ final class renderer2 {
 
         private static void memcpy(long handle)
         {
-//            abs.getToAddress(handle);
+            proj4.getToAddress(handle);
 //            memFloatBuffer(handle, proj2.length).put(proj2);
-            GLU2.theGLU.memcpy2(UniformBufferObject.proj2, handle, UniformBufferObject.proj2.length <<2);
+//            GLU2.theGLU.memcpy2(UniformBufferObject.proj2, handle, UniformBufferObject.proj2.length <<2);
         }
 
         static void createDescriptorPool() {

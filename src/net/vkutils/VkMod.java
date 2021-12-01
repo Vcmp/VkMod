@@ -1,7 +1,5 @@
 package vkutils;
 
-import org.lwjgl.glfw.GLFW;
-
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.JNI.invokePI;
@@ -18,12 +16,13 @@ static boolean a = true;
 
 //            int i = 0;
         new Thread(VkMod::run).start();
-
-        while (a)
+//        new Thread(VkMod::run2).start();
+        while (invokePI(VkUtils2.window, Functions.WindowShouldClose) == 0)
         {
 
             /*while (aa) */{
-                renderer2.Renderer2.drawFrame();
+
+            renderer2.Renderer2.drawFrame();
             }
 //aa=true;
             glfwPollEvents();
@@ -31,25 +30,37 @@ static boolean a = true;
 
 
         }
+        a=false;
 
         renderer2.cleanup();
         glfwTerminate();
     }
-//todo: Wake from callBack...
+
+    private static void run2()
+    {
+        while (a)
+        {
+            renderer2.UniformBufferObject.updateUniformBuffer(1%renderer2.Renderer2.currentFrame);
+        }
+    }
+
+    //todo: Wake from callBack...
     private static void run()
     {
         long l = System.currentTimeMillis();
+//            renderer2.UniformBufferObject.updateUniformBuffer(0);
         while (a) {
 
+//        renderer2.Renderer2.drawFrame(0);
             //glfwWaitEventsTimeout(1);
 
-
+//            renderer2.UniformBufferObject.updateUniformBuffer(renderer2.Renderer2.currentFrame);
             //aa=true;
-
             if (System.currentTimeMillis() > l) {
+                //a=invokePI(VkUtils2.window, Functions.WindowShouldClose)==0;
 //                /*aa=false;*/glfwPollEvents();
                 //todo: need to thritile/manage to fixed branchless Tockrate to avoid excess Polling.Buffering./Overehad
-                a= invokePI(VkUtils2.window, Functions.WindowShouldClose)==0;
+
 //                glfwWaitEventsTimeout(1);
                 System.out.println(renderer2.Renderer2.frps);
 //                System.out.println(VkUtils2.Renderer.i);
@@ -59,6 +70,7 @@ static boolean a = true;
 //                VkUtils2.Renderer.FenceStat=0;
                 l += 1000L;
             }
+
         }
     }
 

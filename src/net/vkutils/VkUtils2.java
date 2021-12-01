@@ -14,10 +14,7 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.toSet;
@@ -49,9 +46,9 @@ public final class VkUtils2 {
     //    KEY(1)
     static final long monitor=0;
     static PointerBuffer glfwExtensions;
-    static final boolean ENABLE_VALIDATION_LAYERS = true;
+    static final boolean ENABLE_VALIDATION_LAYERS = false;
     static final Set<String> VALIDATION_LAYERS;
-    static final boolean debug = true;
+    static final boolean debug = false;
 
     static {
 
@@ -106,7 +103,8 @@ public final class VkUtils2 {
 
         VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
 
-        System.err.println("Validation layer: " + callbackData.pMessageString()+"Object Pointer: "+ callbackData.objectCount());
+        final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        System.err.println("Validation layer: " + callbackData.pMessageString() +"-->"+ stackTrace[5]);
 
         return VK_FALSE;
     }
@@ -149,7 +147,7 @@ public final class VkUtils2 {
             System.out.println(MemSys.stack());
             throw new RuntimeException("Validation requested but not supported");
         }
-        IntBuffer a = MemSys.stack().ints(EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT);
+        IntBuffer a = MemSys.stack().ints(EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
         VkValidationFeaturesEXT extValidationFeatures = VkValidationFeaturesEXT.create(MemSysm.calloc(1, VkValidationFeaturesEXT.SIZEOF)).sType$Default()
                 .pEnabledValidationFeatures(a);
 
@@ -364,9 +362,9 @@ public final class VkUtils2 {
     static final class SwapChainSupportDetails
     {
 
-        static final long[]  swapChainFramebuffers = new long[2];
-        static final long[] swapChainImages = new long[2];
-        static final long[] swapChainImageViews = new long[2];
+        static final long[]  swapChainFramebuffers = new long[3];
+        static final long[] swapChainImages = new long[3];
+        static final long[] swapChainImageViews = new long[3];
         static final long[] renderPass= {0};
         private static int swapChainImageFormat;
         static VkExtent2D swapChainExtent;
@@ -516,7 +514,7 @@ public final class VkUtils2 {
                 int presentMode = chooseSwapPresentMode(presentModes);
                 VkExtent2D extent = chooseSwapExtent();
 
-                int imageCount = (capabilities.minImageCount()/* + 1*/);
+                int imageCount = (capabilities.minImageCount() + 1);
 //                int[] imageCount = {(SwapChainSupportDetails.capabilities.minImageCount()/* + 1*/)};
 
 
@@ -537,11 +535,11 @@ public final class VkUtils2 {
                         .imageArrayLayers(1)
                         .imageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 
-                //Queues.findQueueFamilies(Queues.physicalDevice);
+//                Queues.findQueueFamilies(Queues.physicalDevice);
 
-                if(!(Queues.graphicsFamily ==Queues.presentFamily)) {
+                if(!(Objects.equals(Queues.graphicsFamily, Queues.presentFamily))) {
                     //VkSwapchainCreateInfoKHR.imageSharingMode(VK_SHARING_MODE_CONCURRENT);
-                    createInfo.imageSharingMode(VK_SHARING_MODE_EXCLUSIVE);
+                    createInfo.imageSharingMode(VK_SHARING_MODE_CONCURRENT);
                     createInfo.pQueueFamilyIndices(MemSys.stack().ints(Queues.graphicsFamily, Queues.presentFamily));
                 } else {
                     createInfo.imageSharingMode(VK_SHARING_MODE_EXCLUSIVE);
@@ -560,7 +558,7 @@ public final class VkUtils2 {
 
 //               callPJPPI(PipeLine.deviceAddress, swapChain, (imageCount), NULL, device.getCapabilities().vkGetSwapchainImagesKHR);
 
-                long[] pSwapchainImages = new long[2];
+                long[] pSwapchainImages = new long[3];
 
 
                 KHRSwapchain.vkGetSwapchainImagesKHR(device, swapChain[0], new int[]{(imageCount)}, pSwapchainImages);
@@ -656,7 +654,7 @@ public final class VkUtils2 {
 
         //prepAlloc
         //        private static final long[] vkRenderPass = new long[SwapChainSupportDetails.imageIndex];
-        static final long[] swapChainImages = new long[2];
+        static final long[] swapChainImages = new long[3];
         private static final int OFFSETOF_COLOR = 3 * Float.BYTES;
         private static final int OFFSET_POS = 0;
 
@@ -978,6 +976,17 @@ public final class VkUtils2 {
 
 //        private static final boolean ENABLE_VALIDATION_LAYERS = DEBUG.get(true);
 
+        private static final PointerBuffer pQueue;
+
+        static {
+            PointerBuffer pointerBuffer = MemSys.stack().mallocPointer(1);
+
+            // Convert to long to support addressing up to 2^31-1 elements, regardless of sizeof(element).
+            // The unsigned conversion helps the JIT produce code that is as fast as if int was returned.
+            memPutAddress(pointerBuffer.address0(), VK_NULL_HANDLE);
+            pQueue = pointerBuffer;
+        }
+
 
         private static void destroyDebugUtilsMessengerEXT(VkInstance instance, long debugMessenger) {
 
@@ -992,11 +1001,11 @@ public final class VkUtils2 {
             {
 
 //                Queues.findQueueFamilies(Queues.physicalDevice);
-
+                //TODO: Fix bug with NULL/Missing.Invalid Queues
                 VkDeviceQueueCreateInfo.Buffer queueCreateInfos = VkDeviceQueueCreateInfo.create(MemSysm.malloc(VkDeviceQueueCreateInfo.SIZEOF), uniqueQueueFamilies.length).sType$Default();
 
                 for(int i = 0; i < uniqueQueueFamilies.length; i++) {
-                    //VkDeviceQueueCreateInfo queueCreateInfo = queueCreateInfos.get(i).sType$Default();
+//                    VkDeviceQueueCreateInfo queueCreateInfo = queueCreateInfos.get(i).sType$Default();
 //                    queueCreateInfo.sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO);
                     queueCreateInfos.queueFamilyIndex(uniqueQueueFamilies[i]);
                     queueCreateInfos.pQueuePriorities(MemSys.stack().floats(1.0f));
@@ -1037,17 +1046,11 @@ public final class VkUtils2 {
         private static void setupQueues()
         {
 
-            PointerBuffer pointerBuffer = MemSys.stack().mallocPointer(1);
+            nvkGetDeviceQueue(device, Queues.graphicsFamily, 0, pQueue.address0());
+            Queues.graphicsQueue = new VkQueue(pQueue.get(0), device);
 
-            // Convert to long to support addressing up to 2^31-1 elements, regardless of sizeof(element).
-            // The unsigned conversion helps the JIT produce code that is as fast as if int was returned.
-            memPutAddress(pointerBuffer.address0(), VK_NULL_HANDLE);
-
-            nvkGetDeviceQueue(device, Queues.graphicsFamily, 0, pointerBuffer.address0());
-            Queues.graphicsQueue = new VkQueue(pointerBuffer.get(0), device);
-
-            nvkGetDeviceQueue(device, Queues.presentFamily, 0, pointerBuffer.address0());
-            Queues.presentQueue = new VkQueue(pointerBuffer.get(0), device);
+            nvkGetDeviceQueue(device, Queues.presentFamily, 0, pQueue.address0());
+            Queues.presentQueue = new VkQueue(pQueue.get(0), device);
         }
 
         private static long doPointerAlloc(@NotNull Struct allocateInfo)
@@ -1092,42 +1095,39 @@ public final class VkUtils2 {
         static Integer presentFamily;
         static int a =0;
 
-        /*static void findQueueFamilies(VkPhysicalDevice device) {
+       /* static void findQueueFamilies(VkPhysicalDevice device) {
 
-           {
-
-               IntBuffer queueFamilyCount = MemSysm.stack().ints(0);
+            IntBuffer queueFamilyCount = memIntBuffer(MemSys.stack().getAddress(), 1).put(0);// stack.stack().ints(0);
 
 
-               nvkGetPhysicalDeviceQueueFamilyProperties(device, memAddress0(queueFamilyCount), 0);
+            nvkGetPhysicalDeviceQueueFamilyProperties(device, memAddress0(queueFamilyCount), 0);
 
-               VkQueueFamilyProperties.Buffer queueFamilies = VkQueueFamilyProperties.malloc(queueFamilyCount.get(0), MemSysm.stack());
+            VkQueueFamilyProperties.Buffer queueFamilies = VkQueueFamilyProperties.malloc(queueFamilyCount.get(0), MemSys.stack());
 
+            nvkGetPhysicalDeviceQueueFamilyProperties(device, memAddress0(queueFamilyCount), memAddressSafe(queueFamilies));
 
-               nvkGetPhysicalDeviceQueueFamilyProperties(device, memAddress0(queueFamilyCount), memAddressSafe(queueFamilies));
+            IntBuffer presentSupport = MemSys.stack().ints(VK_FALSE);
 
-               IntBuffer presentSupport = MemSysm.stack().ints(VK_FALSE);
+            for(int i = 0; i < queueFamilies.capacity() || !Queues.isComplete(); i++) {
 
-              int bound = queueFamilies.capacity();
-              for (int i = 0; i < bound; i++) {
-                  if ((queueFamilies.get(i).queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {
-                      graphicsFamily=i;
+                if((queueFamilies.get(i).queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {
+                    Queues.graphicsFamily = 0;
+                }
 
-                  }
-                  vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, presentSupport);
+                KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, presentSupport);
 
-                  if(presentSupport.get(0) == VK_TRUE) {
-                      presentFamily = i;
-                  }
-              }
-
-//               return new QueueFamilyIndices();
-           }
+                if(presentSupport.get(0) == VK_TRUE) {
+                    Queues.presentFamily = 0;
+                }
+            }
        }*/
 
         static boolean isComplete() {return graphicsFamily != null && presentFamily != null;}
 
-
+/*TODO: Qierd isue wheer teh GPU Core laod becomes Unstable(Inconsitent-Fluctuating) at much higher vertcie slevels, VBOs/FBos.UBOs, unsure of the exatc ersion currently soutside og architecural/Utilsitaion/Thrputpu/efefctivnely/untilsitaion issues/Ineffciencies
+        * Update: Was actual found to be due to a culling issue where the Framerate varies based on which Position or angle the vertex Buffer/VBO is viewed from, which due to the poorly optimised Intilaistaion/placemtn of verticies are only visib;e from certain diretcions, hense/causing.deriving the Framerate Differnce/Fluctuation/Inconsistency
+        * This issue should be easily fixbale with a properr implemtaion of a Index Buffer with vertex DeDuplication the reduent
+                */
         private static void findQueueFamilies(VkPhysicalDevice device) {
 
             {
@@ -1161,7 +1161,7 @@ public final class VkUtils2 {
                 MemSysm.Memsys2.free(queueFamilies);
                 //vkutils.MemSysm.Memsys2.free(queueFamilyCount);
 
-//                return new QueueFamilyIndices();
+        //                return new QueueFamilyIndices();
             }
         }
     }
