@@ -20,6 +20,7 @@ import static org.lwjgl.vulkan.VK10.VK_NOT_READY;
 import static org.lwjgl.vulkan.VK10.VK_TIMEOUT;
 import static vkutils.VkUtils2.Queues.device;
 
+
 final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*implements MemoryAllocator*/ {
 
 //    protected static final VkAllocationCallbacks pAllocator = null;
@@ -48,6 +49,25 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         return address+=size;
     }
 
+    public static long calloc(long size)
+    {
+        final long l = JEmalloc.nje_calloc(1, size);
+        if(tracker.getOrDefault(l, 0L)!=0)
+        {
+            System.err.println("WARN:C: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
+            return l;
+        }
+        if(contains(l))
+        {
+            System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
+
+        }
+        System.out.println("AllocatingC: " + size + " With Capacity: " + 1 + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
+        stacks += size;
+        tracker.put(l, size);
+        return l;
+        //return LibCStdlib.ncalloc(num, size);
+    }
     public static long calloc(long num, long size)
     {
         final long l = JEmalloc.nje_calloc(num, size);
@@ -142,7 +162,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     static void doPointerAllocSafeExtrm2(long imageInfo, long vkCreateImage, long[] a)
     {
         Memsys2.free8(imageInfo);
-        checkCall(JNI.callPPPPI(VkUtils2.Queues.device.address(), imageInfo, NULL, a, vkCreateImage));
+        checkCall(callPPPPI(device.address(), imageInfo, NULL, a, vkCreateImage));
     }
 
     //todo: modfied form of getHandle specificaly Deisgned to handle Dierct access to UniformBuffer Modifictaion with Alternative CommandBuffer Execution, All memory Address Loctaions smust be aligned to 512 exactly to avoid Rendering Artifacts./nstablity
@@ -224,7 +244,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 
      static final class Memsys2 {
 
-         private static final LongBuffer removed = memLongBuffer(address+64L, 64);
+         private static final LongBuffer removed = memLongBuffer(address+64L, 128);
 
          static void doPointerAllocSafe2(Pointer allocateInfo, long vkCreateBuffer, long[] a)
         {

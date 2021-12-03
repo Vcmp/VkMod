@@ -17,7 +17,7 @@ static boolean a = true;
 //            int i = 0;
         new Thread(VkMod::run).start();
 //        new Thread(VkMod::run2).start();
-        while (invokePI(VkUtils2.window, Functions.WindowShouldClose) == 0)
+        while (invokePI(VkUtils2.VkInit.window, Functions.WindowShouldClose) == 0)
         {
 
             /*while (aa) */{
