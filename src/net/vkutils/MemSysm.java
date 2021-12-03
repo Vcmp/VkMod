@@ -2,7 +2,6 @@ package vkutils;
 
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.system.Checks;
-import org.lwjgl.system.JNI;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.Pointer;
 import org.lwjgl.system.jemalloc.JEmalloc;
@@ -13,8 +12,7 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
 
-import static org.lwjgl.system.JNI.callPJPPPI;
-import static org.lwjgl.system.JNI.callPPPPI;
+import static org.lwjgl.system.JNI.*;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.vulkan.VK10.VK_NOT_READY;
 import static org.lwjgl.vulkan.VK10.VK_TIMEOUT;
@@ -25,28 +23,16 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 
 //    protected static final VkAllocationCallbacks pAllocator = null;
     //int m = JEmalloc.je_mallctl()
-    static final long[] pDummyPlacementPointerAlloc = {0};
+    private static final long[] pDummyPlacementPointerAlloc = {0};
     static long stacks;
     static final HashMap<Long, Long> tracker= new HashMap<>();
-    static  long address = JEmalloc.nje_mallocx(1, 0);//nmemAllocChecked(Pointer.POINTER_SIZE);
-
-    //static final long MemMainAllC = JEmalloc.nje_mallocx(128, 0);
-     private static void checkCall(int callPPPPI)
-    {
-        switch (callPPPPI)
-        {
-            case VK_NOT_READY -> throw new RuntimeException("Not ready!");
-            case VK_TIMEOUT -> throw new RuntimeException("Bad TimeOut!");
-            default -> {
-            }
-        }
-    }
+    static final long address = JEmalloc.nje_malloc(0)+VkMemoryRequirements.SIZEOF;//nmemAllocChecked(Pointer.POINTER_SIZE);
 
     public static long mallocM(long num, long size)
     {
         System.err.println(VkMemoryRequirements.SIZEOF);
         //final long l = JEmalloc.nje_malloc(MemMainAllC+size);
-        return address+=size;
+        return address;//+=size;
     }
 
     public static long calloc(long size)
@@ -57,7 +43,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             System.err.println("WARN:C: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
         }
-        if(contains(l))
+        if(Memsys2.contains(l))
         {
             System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
 
@@ -76,7 +62,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             System.err.println("WARN:C: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
         }
-        if(contains(l))
+        if(Memsys2.contains(l))
         {
             System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
 
@@ -86,17 +72,6 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         tracker.put(l, size);
         return l;
         //return LibCStdlib.ncalloc(num, size);
-    }
-
-    private static boolean contains(long l)
-    {
-        //removed.rewind();
-        for (int i = 0; i< Memsys2.removed.limit(); i++)
-        {
-            if(Memsys2.removed.get(i)==l)
-                return true;
-        }
-        return false;
     }
 
     public static ByteBuffer mallocB(int i, int size)
@@ -125,7 +100,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             System.err.println("WARN:M: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
         }
-        if(contains(l))
+        if(Memsys2.contains(l))
         {
             System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
 
@@ -171,7 +146,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     static void doPointerAllocSafeExtrm2(long imageInfo, long vkCreateImage, long[] a)
     {
 //        Memsys2.free8(imageInfo);
-        checkCall(callPPPPI(device.address(), imageInfo, NULL, a, vkCreateImage));
+        Memsys2.checkCall(callPPPPI(device.address(), imageInfo, NULL, a, vkCreateImage));
     }
 
     //todo: modfied form of getHandle specificaly Deisgned to handle Dierct access to UniformBuffer Modifictaion with Alternative CommandBuffer Execution, All memory Address Loctaions smust be aligned to 512 exactly to avoid Rendering Artifacts./nstablity
@@ -186,7 +161,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 //        Memsys2.free(allocateInfo);
         System.out.println("Attempting to Call: ->"+ memGetLong(allocateInfo));
         Checks.check(allocateInfo);
-        checkCall(callPPPPI(device.address(), allocateInfo, NULL, pDummyPlacementPointerAlloc, vkCreateBuffer));
+        Memsys2.checkCall(callPPPPI(device.address(), allocateInfo, NULL, pDummyPlacementPointerAlloc, vkCreateBuffer));
 
         return pDummyPlacementPointerAlloc[0];
     }
@@ -208,7 +183,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 //        Memsys2.free(allocateInfo);
         System.out.println("Attempting to CallS: ->"+allocateInfo);
         Checks.check(allocateInfo.address());
-        checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, pDummyPlacementPointerAlloc, vkCreateBuffer));
+        Memsys2.checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, pDummyPlacementPointerAlloc, vkCreateBuffer));
         return pDummyPlacementPointerAlloc[0];
     }
     static long doPointerAllocSafe(@NotNull Pointer allocateInfo, long vkCreateBuffer) {
@@ -216,14 +191,14 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         //Memsys2.free(allocateInfo);
         System.out.println("Attempting to CallS: ->"+allocateInfo+"-->"+Thread.currentThread().getStackTrace()[2]);
         Checks.check(allocateInfo.address());
-        checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, pDummyPlacementPointerAlloc, vkCreateBuffer));
+        Memsys2.checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, pDummyPlacementPointerAlloc, vkCreateBuffer));
         return pDummyPlacementPointerAlloc[0];
     }
 
     static long doPointerAlloc5L(Pointer device, Pointer pipelineInfo)
     {
         Checks.check(pipelineInfo.address());
-        checkCall(callPJPPPI(device.address(), VK10.VK_NULL_HANDLE, 1, pipelineInfo.address(), NULL, pDummyPlacementPointerAlloc, renderer2.Buffers.capabilities.vkCreateGraphicsPipelines));
+        Memsys2.checkCall(callPJPPPI(device.address(), VK10.VK_NULL_HANDLE, 1, pipelineInfo.address(), NULL, pDummyPlacementPointerAlloc, renderer2.Buffers.capabilities.vkCreateGraphicsPipelines));
         return pDummyPlacementPointerAlloc[0];
     }
 
@@ -253,7 +228,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 
      static final class Memsys2 {
 
-         private static final LongBuffer removed = memLongBuffer(address+64L, 128);
+         private static final LongBuffer removed = memLongBuffer(address+64L, 64);
 
          static void doPointerAllocSafe2(Pointer allocateInfo, long vkCreateBuffer, long[] a)
         {
@@ -322,6 +297,36 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             }
             JEmalloc.je_free(ptr);
         }
+
+         static VkCommandBuffer doPointerAllocAlt(long allocateInfo, long vkAllocateCommandBuffers) {
+            //            vkAllocateMemory(device, allocateInfo, pAllocator(), pVertexBufferMemory);
+            callPPPI(device.address(), allocateInfo, pDummyPlacementPointerAlloc, vkAllocateCommandBuffers);
+            return new VkCommandBuffer(pDummyPlacementPointerAlloc[0], device);
+
+        }
+
+         //static final long MemMainAllC = JEmalloc.nje_mallocx(128, 0);
+          private static void checkCall(int callPPPPI)
+         {
+             switch (callPPPPI)
+             {
+                 case VK_NOT_READY -> throw new RuntimeException("Not ready!");
+                 case VK_TIMEOUT -> throw new RuntimeException("Bad TimeOut!");
+                 default -> {
+                 }
+             }
+         }
+
+         private static boolean contains(long l)
+         {
+             //removed.rewind();
+             for (int i = 0; i< removed.limit(); i++)
+             {
+                 if(removed.get(i)==l)
+                     return true;
+             }
+             return false;
+         }
 
        /* @Override
         public boolean equals(Object obj)
