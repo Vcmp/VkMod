@@ -17,7 +17,7 @@ static boolean a = true;
 //            int i = 0;
         new Thread(VkMod::run).start();
 //        new Thread(VkMod::run2).start();
-        while (invokePI(VkUtils2.VkInit.window, Functions.WindowShouldClose) == 0)
+        while (invokePI(VkUtils2.window, Functions.WindowShouldClose) == 0)
         {
 
             /*while (aa) */{
@@ -36,13 +36,13 @@ static boolean a = true;
         glfwTerminate();
     }
 
-    private static void run2()
+   /* private static void run2()
     {
         while (a)
         {
             renderer2.UniformBufferObject.updateUniformBuffer(1%renderer2.Renderer2.currentFrame);
         }
-    }
+    }*/
 
     //todo: Wake from callBack...
     private static void run()

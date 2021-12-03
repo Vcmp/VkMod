@@ -158,10 +158,19 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         memPutLong(s, commandBuffer.address());
         return s;
     }
+    public static long callocLongPtr(Pointer commandBuffer)
+    {
+        System.out.println("AllocatingL: "+commandBuffer+"Addr: "+commandBuffer.address()+" Total Allocations : "+stacks);
+        long s = JEmalloc.nje_calloc(1, 8);
+        tracker.put(s, commandBuffer.address());
+        stacks+=8;
+        memPutLong(s, commandBuffer.address());
+        return s;
+    }
 
     static void doPointerAllocSafeExtrm2(long imageInfo, long vkCreateImage, long[] a)
     {
-        Memsys2.free8(imageInfo);
+//        Memsys2.free8(imageInfo);
         checkCall(callPPPPI(device.address(), imageInfo, NULL, a, vkCreateImage));
     }
 
@@ -211,10 +220,10 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         return pDummyPlacementPointerAlloc[0];
     }
 
-    static long doPointerAlloc5L(VkDevice device, VkGraphicsPipelineCreateInfo.Buffer pipelineInfo)
+    static long doPointerAlloc5L(Pointer device, Pointer pipelineInfo)
     {
-        Checks.check(pipelineInfo.address0());
-        checkCall(callPJPPPI(device.address(), VK10.VK_NULL_HANDLE, pipelineInfo.remaining(), pipelineInfo.address0(), NULL, pDummyPlacementPointerAlloc, renderer2.Buffers.capabilities.vkCreateGraphicsPipelines));
+        Checks.check(pipelineInfo.address());
+        checkCall(callPJPPPI(device.address(), VK10.VK_NULL_HANDLE, 1, pipelineInfo.address(), NULL, pDummyPlacementPointerAlloc, renderer2.Buffers.capabilities.vkCreateGraphicsPipelines));
         return pDummyPlacementPointerAlloc[0];
     }
 
@@ -259,10 +268,10 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         {
             final long orDefault = tracker.getOrDefault(ptr.address(), 0L);
             final long stacks = memGetLong(ptr.address());//+ orDefault;
-            if (stacks == 0 || orDefault == 0) {
+            if (/*stacks == 0 || */orDefault == 0) {
                 throw new UnsupportedOperationException("Warn: Don't Need to free!: " + ptr + "" + ptr.address());
             }
-            System.out.println("            Freeing: ->" + ptr + "Size: " + stacks + " Addr: " + ptr.address() + "Current allocations: " + MemSysm.stacks);
+            System.out.println("            Freeing: ->" + ptr + "Size: " + stacks + " Addr: " + ptr.address() + "Current allocations: " + MemSysm.stacks + "-->"+Thread.currentThread().getStackTrace()[2]);
             MemSysm.stacks -= stacks;
             JEmalloc.nje_free(ptr.address());
             tracker.remove(ptr.address());
@@ -271,6 +280,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 
         public static void free(long ptr)
         {
+            System.out.print("Attempting to free: "+ ptr + "-->" + Thread.currentThread().getStackTrace()[2] + "-->");
             final long orDefault = tracker.getOrDefault(ptr, 0L);
             final long stacks = memGetLong(ptr);
             if (orDefault == 0) {
@@ -288,8 +298,15 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 
         public static void free8(long ptr)
         {
-            final long stacks = tracker.getOrDefault(memGetLong(ptr), 0L);
-            System.out.println("FreeingL: " + ptr + "Size: " + stacks + "Current allocations: " + MemSysm.stacks);
+            final long orDefault = tracker.getOrDefault(ptr, 0L);
+            final long stacks = memGetLong(ptr);
+            if (orDefault == 0) {
+                throw new UnsupportedOperationException("Warn: Don't Need to free!: " + ptr);
+            }
+            if (stacks == 0) {
+                System.err.println("WARN: Is not Allocated Object!");
+            }
+            System.out.println("FreeingL: " + ptr + "Size: " + stacks + "Current allocations: " + MemSysm.stacks + "-->" + Thread.currentThread().getStackTrace()[2]);
             MemSysm.stacks -= 8;
             removed.put(ptr);
             JEmalloc.nje_free(ptr);

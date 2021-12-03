@@ -56,7 +56,7 @@ final class ShaderSPIRVUtils {
 
         {
 
-            return MemSysm.doPointerAllocSafeA(VkShaderModuleCreateInfo.calloc(VkUtils2.VkInit.MemSys.stack()).sType$Default().pCode(spirvCode), renderer2.Buffers.capabilities.vkCreateShaderModule);
+            return MemSysm.doPointerAllocSafeA(VkShaderModuleCreateInfo.calloc(VkUtils2.MemSys.stack()).sType$Default().pCode(spirvCode), renderer2.Buffers.capabilities.vkCreateShaderModule);
         }
     }
 
