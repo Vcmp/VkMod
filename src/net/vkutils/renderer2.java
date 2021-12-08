@@ -76,23 +76,19 @@ final class renderer2 {
 
         {
             vkDestroySemaphore(device, Renderer2.AvailableSemaphore[0], VkUtils2.MemSys.pAllocator());
-                vkDestroySemaphore(device, Renderer2.FinishedSemaphore[0], VkUtils2.MemSys.pAllocator());
+//                vkDestroySemaphore(device, VkUtils2.Renderer.FinishedSemaphore[0], pAllocator);
             //vkDestroyFence(device, Renderer2.vkFence[0], VkUtils2.MemSysm.pAllocator());
         }
         vkDestroyDescriptorSetLayout(device, UniformBufferObject.descriptorSetLayout[0], VkUtils2.MemSys.pAllocator());
         vkDestroyDescriptorPool(device, UniformBufferObject.descriptorPool[0], VkUtils2.MemSys.pAllocator());
-            vkDestroySwapchainKHR(device, VkUtils2.SwapChainSupportDetails.swapChain[0], VkUtils2.MemSys.pAllocator());
-            vkDestroyImage(device, Buffers.vkImage[0], VkUtils2.MemSys.pAllocator());
         for (int i = 0; i < VkUtils2.SwapChainSupportDetails.swapChainFramebuffers.length; i++)
         {
+            vkDestroySwapchainKHR(device, VkUtils2.SwapChainSupportDetails.swapChainImages[i], VkUtils2.MemSys.pAllocator());
             vkDestroyImageView(device, VkUtils2.SwapChainSupportDetails.swapChainImageViews[i], VkUtils2.MemSys.pAllocator());
-//            vkDestroyImage(device,  VkUtils2.SwapChainSupportDetails.swapChainImages[i], VkUtils2.MemSys.pAllocator());
             vkFreeCommandBuffers(device, Buffers.commandPool[0], Buffers.commandBuffers[i]);
             vkDestroyFramebuffer(device, VkUtils2.SwapChainSupportDetails.swapChainFramebuffers[i], VkUtils2.MemSys.pAllocator());
-/*
             vkFreeMemory(device, UniformBufferObject.uniformBuffersMemory[i], VkUtils2.MemSys.pAllocator());
             vkDestroyBuffer(device, UniformBufferObject.uniformBuffers[i], VkUtils2.MemSys.pAllocator());
-*/
 
         }
         {
@@ -103,11 +99,11 @@ final class renderer2 {
 
 
 //            vkFreeMemory(Queues.device, PipeLine.stagingBufferMemory, pAllocator);
-//        vkFreeMemory(device, Buffers.vertexBufferMemory[0], VkUtils2.MemSys.pAllocator());
-//        vkFreeMemory(device, Buffers.indexBufferMemory[0], VkUtils2.MemSys.pAllocator());
-//        vkDestroyBuffer(device, Buffers.vertexBuffer[0], VkUtils2.MemSys.pAllocator());
+        vkFreeMemory(device, Buffers.vertexBufferMemory[0], VkUtils2.MemSys.pAllocator());
+        vkFreeMemory(device, Buffers.indexBufferMemory[0], VkUtils2.MemSys.pAllocator());
+        vkDestroyBuffer(device, Buffers.vertexBuffer[0], VkUtils2.MemSys.pAllocator());
 //            vkDestroyBuffer(Queues.device, PipeLine.stagingBuffer, pAllocator);
-//        vkDestroyBuffer(device, Buffers.indexBuffer[0], VkUtils2.MemSys.pAllocator());
+        vkDestroyBuffer(device, Buffers.indexBuffer[0], VkUtils2.MemSys.pAllocator());
         vkDestroyCommandPool(device, Buffers.commandPool[0], VkUtils2.MemSys.pAllocator());
 
         vkDestroyPipeline(device, Buffers.graphicsPipeline, VkUtils2.MemSys.pAllocator());
@@ -452,7 +448,7 @@ final class renderer2 {
 //            memPutAddress(vkRenderPassAttachmentBeginInfo1.address() + VkRenderPassAttachmentBeginInfo.PATTACHMENTS,  VkUtils2.SwapChainSupportDetails.swapChainImageViews[0]); //TODO: Attempt to Imp;eme nt imageless FrameBuffers
 //            memPutAddress(vkRenderPassAttachmentBeginInfo1.address() + VkRenderPassAttachmentBeginInfo.PATTACHMENTS,  VkUtils2.SwapChainSupportDetails.swapChainImageViews[1]); //TODO: Attempt to Imp;eme nt imageless FrameBuffers
 //            VkRenderPassAttachmentBeginInfo.nattachmentCount(vkRenderPassAttachmentBeginInfo1.address(), 2);
-            VkRect2D renderArea = VkRect2D.create(MemSysm.malloc(VkRect2D.SIZEOF))
+            VkRect2D renderArea = VkRect2D.create(MemSysm.address)
                     .offset(set)
                     .extent(VkUtils2.SwapChainSupportDetails.swapChainExtent);
 
@@ -564,7 +560,7 @@ final class renderer2 {
 
         static long setBuffer(int usage, int size) {
             //long allocateInfo = VkUtils2.MemSysm.malloc(VkBufferCreateInfo.SIZEOF);
-            VkBufferCreateInfo allocateInfo = VkBufferCreateInfo.create(MemSysm.calloc(1, VkBufferCreateInfo.SIZEOF))
+            VkBufferCreateInfo allocateInfo = VkBufferCreateInfo.create(MemSysm.malloc(VkBufferCreateInfo.SIZEOF))
                     .sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
                     .size(size)
                     .usage(usage)
@@ -661,12 +657,11 @@ final class renderer2 {
 
             VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
-            long vkBufferCopy = MemSysm.malloc(VkBufferCopy.SIZEOF);
-            VkBufferCopy.nsrcOffset(vkBufferCopy, 0);
-            VkBufferCopy.ndstOffset(vkBufferCopy, 0);
-            VkBufferCopy.nsize(vkBufferCopy, size);
+            VkBufferCopy.nsrcOffset(MemSysm.address, 0);
+            VkBufferCopy.ndstOffset(MemSysm.address, 0);
+            VkBufferCopy.nsize(MemSysm.address, size);
 //            nmemFree(vkBufferCopy);
-            nvkCmdCopyBuffer(commandBuffer, stagingBuffer[0], dstBuffer[0], 1, vkBufferCopy);
+            nvkCmdCopyBuffer(commandBuffer, stagingBuffer[0], dstBuffer[0], 1, MemSysm.address);
             endSingleTimeCommands(commandBuffer);
 
         }
@@ -928,7 +923,7 @@ final class renderer2 {
 
         static void createDescriptorPool() {
             {
-                VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.create(MemSysm.malloc(VkDescriptorPoolSize.SIZEOF), 2);
+                VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.create(MemSysm.address, 2);
 //                        .type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
 //                        .descriptorCount(PipeLine.swapChainImages.length);
                 VkDescriptorPoolSize uniformBufferPoolSize = poolSize.get(0)

@@ -111,6 +111,26 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         return l;//memAddress0(LibCStdlib.malloc(size));
 //        return LibCStdlib.nmalloc(Integer.toUnsignedLong(size));//memAddress0(LibCStdlib.malloc(size));
     }
+    public static long malloc2(long size)
+    {
+        return address;
+        /*final long l = JEmalloc.nje_malloc(1);
+        if(tracker.getOrDefault(l, 0L)==size)
+        {
+            System.err.println("WARN:M: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
+            return l;
+        }
+        if(Memsys2.contains(l))
+        {
+            System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
+
+        }
+        System.out.println("AllocatingM: " + size + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
+        stacks += size;
+        tracker.put(l, size);
+        return l;//memAddress0(LibCStdlib.malloc(size));*/
+//        return LibCStdlib.nmalloc(Integer.toUnsignedLong(size));//memAddress0(LibCStdlib.malloc(size));
+    }
 
     public static long mallocLongPtr(long descriptorSets)
     {
