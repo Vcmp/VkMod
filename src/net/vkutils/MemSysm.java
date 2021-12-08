@@ -45,7 +45,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         }
         if(Memsys2.contains(l))
         {
-            System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
+            System.err.println("WARN:C: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
 
         }
         System.out.println("AllocatingC: " + size + " With Capacity: " + 1 + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
@@ -64,7 +64,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         }
         if(Memsys2.contains(l))
         {
-            System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
+            System.err.println("WARN:C: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
 
         }
         System.out.println("AllocatingC: " + size + " With Capacity: " + num + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
@@ -243,7 +243,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         {
             final long orDefault = tracker.getOrDefault(ptr.address(), 0L);
             final long stacks = memGetLong(ptr.address());//+ orDefault;
-            if (/*stacks == 0 || */orDefault == 0) {
+            if (stacks == 0 || orDefault == 0) {
                 throw new UnsupportedOperationException("Warn: Don't Need to free!: " + ptr + "" + ptr.address());
             }
             System.out.println("            Freeing: ->" + ptr + "Size: " + stacks + " Addr: " + ptr.address() + "Current allocations: " + MemSysm.stacks + "-->"+Thread.currentThread().getStackTrace()[2]);

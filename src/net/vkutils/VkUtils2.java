@@ -158,7 +158,7 @@ public final class VkUtils2 {
                 .applicationVersion(VK_MAKE_VERSION(1, 0, 0))
                 .pEngineName(MemSys.stack().UTF8Safe("No Engine"))
                 .engineVersion(VK_MAKE_VERSION(1, 0, 0))
-                .apiVersion(VK_API_VERSION_1_0);
+                .apiVersion(VK12.VK_API_VERSION_1_2);
 
 
         //nmemFree(vkApplInfo);
@@ -1010,22 +1010,30 @@ public final class VkUtils2 {
                     queueCreateInfos.queueFamilyIndex(uniqueQueueFamilies[i]);
                     queueCreateInfos.pQueuePriorities(MemSys.stack().floats(1.0f));
                 }
+                VkPhysicalDeviceVulkan12Features deviceVulkan12Features = VkPhysicalDeviceVulkan12Features.malloc(MemSys.stack()).sType$Default()
+                        .imagelessFramebuffer(true)
+                        .descriptorBindingPartiallyBound(true);
 
-                VkPhysicalDeviceFeatures deviceFeatures = VkPhysicalDeviceFeatures.calloc(MemSys.stack());
+
+                VkPhysicalDeviceFeatures2 deviceFeatures2 = VkPhysicalDeviceFeatures2.malloc(MemSys.stack()).sType$Default()
+                        .pNext(deviceVulkan12Features);
+
+
                 //.fillModeNonSolid(true) //dneeded to adres valditaion errors when using VK_POLIGYON_MODE_LINE or POINT
                 //.robustBufferAccess(true);
 //                        .geometryShader(true);
 //                        .pipelineStatisticsQuery(true)
 //                        .alphaToOne(false);
-
-                VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.create(MemSysm.malloc(VkDeviceCreateInfo.SIZEOF)).sType$Default();
+                VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.malloc(MemSys.stack()).sType$Default()
+                        .pNext(deviceFeatures2);
+                VK11.vkGetPhysicalDeviceFeatures2(Queues.physicalDevice, deviceFeatures2);
 
 //                createInfo.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
-                MemSysm.Memsys2.free(queueCreateInfos);
+//                MemSysm.Memsys2.free(queueCreateInfos);
                 createInfo.pQueueCreateInfos(queueCreateInfos);
                 // queueCreateInfoCount is automatically set
 
-                memPutLong(createInfo.address() + VkDeviceCreateInfo.PENABLEDFEATURES, deviceFeatures.address());
+//                memPutLong(createInfo.address() + VkDeviceCreateInfo.PENABLEDFEATURES, deviceFeatures2.address());
 
                 PointerBuffer value = asPointerBuffer(DEVICE_EXTENSIONS);
                 memPutLong(createInfo.address() + VkDeviceCreateInfo.PPENABLEDEXTENSIONNAMES, value.address0());
@@ -1034,7 +1042,7 @@ public final class VkUtils2 {
                 if(ENABLE_VALIDATION_LAYERS) {
                     createInfo.ppEnabledLayerNames(asPointerBuffer(VALIDATION_LAYERS));
                 }
-                MemSysm.Memsys2.free(createInfo);
+//                MemSysm.Memsys2.free(createInfo);
 //                PointerBuffer pDevice = stack.stack().pointers(VK_NULL_HANDLE);
                 device = new VkDevice(doPointerAlloc(createInfo), Queues.physicalDevice, createInfo);
 
