@@ -401,20 +401,23 @@ public final class VkUtils2 {
         {
             System.out.println("Creating Image Views");
 
-            for (int i = 0; i < PipeLine.swapChainImages.length; i++) {
+           /* for (int i = 0; i < PipeLine.swapChainImages.length; i++)*/ {
 
 //                swapChainImageViews[i]=PipeLine.createImageView(swapChainImages[i], swapChainImageFormat);
 
-                swapChainImageViews[i]= createImageView(PipeLine.swapChainImages[i], swapChainImageFormat);
+                createImageView(swapChainImageFormat);
             }
 
 
         }
 
-        static long createImageView(long i, int swapChainImageFormat) {
+        static void createImageView(int swapChainImageFormat)
+        {
+
+            //Memsys2.free(createInfo);//nmemFree(createInfo.address());
             VkImageViewCreateInfo createInfo = VkImageViewCreateInfo.create(MemSysm.malloc(VkImageViewCreateInfo.SIZEOF)).sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
-                    .image(i)
+
                     .viewType(VK_IMAGE_VIEW_TYPE_2D)
                     .format(swapChainImageFormat);
 
@@ -424,9 +427,10 @@ public final class VkUtils2 {
                     .levelCount(1)
                     .baseArrayLayer(0)
                     .layerCount(1);
-            //Memsys2.free(createInfo);//nmemFree(createInfo.address());
+            for (int iu = 0; iu < PipeLine.swapChainImages.length; iu++) {
 
-            return MemSysm.doPointerAllocSafe(createInfo, renderer2.Buffers.capabilities.vkCreateImageView);
+                swapChainImageViews[iu] = MemSysm.doPointerAllocSafe(createInfo.image(PipeLine.swapChainImages[iu]), renderer2.Buffers.capabilities.vkCreateImageView);
+            }
         }
 
         private static void querySwapChainSupport(VkPhysicalDevice device)
@@ -464,12 +468,22 @@ public final class VkUtils2 {
 
                 LongBuffer attachments;
 //               if(depthBuffer)
-                attachments = MemSys.stack().longs(VK_NULL_HANDLE, renderer2.Buffers.depthImageView[0]);
+                attachments = MemSys.stack().longs(VK_FORMAT_R8G8B8A8_SRGB, renderer2.Buffers.depthImageView[0]);
 //               else
 //                   attachments = stack.stack().longs(1);
-                VkFramebufferAttachmentImageInfo.Buffer  AttachmentImageInfo = VkFramebufferAttachmentImageInfo .create(MemSysm.malloc(VkFramebufferAttachmentImageInfo .SIZEOF),2);
-                AttachmentImageInfo.get(0).sType$Default();
-                AttachmentImageInfo.get(1).sType$Default();
+                VkFramebufferAttachmentImageInfo.Buffer  AttachmentImageInfo = VkFramebufferAttachmentImageInfo .create(MemSysm.calloc(VkFramebufferAttachmentImageInfo .SIZEOF),2);
+                AttachmentImageInfo.get(0).sType$Default()
+                                .layerCount(1)
+                                        .width(swapChainExtent.width())
+                                                .height(swapChainExtent.height())
+                                                        .usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
+                                                                .pViewFormats(MemSys.stack().ints(VK_FORMAT_R8G8B8A8_SRGB));
+                AttachmentImageInfo.get(1).sType$Default()
+                                .layerCount(1)
+                        .width(swapChainExtent.width())
+                        .height(swapChainExtent.height())
+                        .usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+                        .pViewFormats(MemSys.stack().ints(Texture.findDepthFormat()));
 
                 VkFramebufferAttachmentsCreateInfo vkFramebufferAttachmentsCreateInfo = VkFramebufferAttachmentsCreateInfo.create(MemSysm.malloc(VkFramebufferAttachmentsCreateInfo.SIZEOF)).sType$Default()
                         .pAttachmentImageInfos(AttachmentImageInfo);
@@ -483,7 +497,7 @@ public final class VkUtils2 {
                         .height(swapChainExtent.height())
                         .layers(1)
                         .pAttachments(attachments)
-                       .flags(VK12.VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT)
+//                       .flags(VK12.VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT)
                         .pNext(vkFramebufferAttachmentsCreateInfo)
                         .attachmentCount(attachments.capacity());
 
@@ -495,8 +509,8 @@ public final class VkUtils2 {
                 //nmemFree(framebufferCreateInfo.address());
                 //TODO: warn Possible Fail!
                 for (int i = 0; i < swapChainImageViews.length; i++) {
-
                     attachments.put(0, swapChainImageViews[i]);
+
 
 
                     swapChainFramebuffers[i] = MemSysm.doPointerAllocSafe(framebufferCreateInfo/*.pNext(NULL)*/, renderer2.Buffers.capabilities.vkCreateFramebuffer);
@@ -1028,7 +1042,7 @@ public final class VkUtils2 {
 //                        .alphaToOne(false);
                 VK11.vkGetPhysicalDeviceFeatures2(Queues.physicalDevice, deviceFeatures2);
                 VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.malloc(MemSys.stack()).sType$Default()
-                        .pNext(deviceVulkan12Features)
+//                        .pNext(deviceVulkan12Features)
                         .pNext(deviceFeatures2)
                                 .pEnabledFeatures(deviceFeatures);
 

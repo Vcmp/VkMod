@@ -25,6 +25,8 @@ final class renderer2 {
 //            for (int i =0; i< Renderer.MAX_FRAMES_IN_FLIGHT;i++)
         glfwPostEmptyEvent();
         vkDeviceWaitIdle(device);
+
+        cleanupBuffers();
 //            vkWaitForFences(Queues.device, Renderer.vkFence, true, 1000000000);
 
         _mainDeletionQueue();
@@ -43,6 +45,28 @@ final class renderer2 {
         glfwTerminate();
     }
 
+    private static void cleanupBuffers()
+    {
+        vkUnmapMemory(device, UniformBufferObject.uniformBuffersMemory[1]);
+        vkDestroyBuffer(device, Buffers.vertexBuffer[0], VkUtils2.MemSys.pAllocator());
+        vkFreeMemory(device, Buffers.vertexBufferMemory[0], VkUtils2.MemSys.pAllocator());
+        vkDestroyBuffer(device, Buffers.indexBuffer[0], VkUtils2.MemSys.pAllocator());
+        vkFreeMemory(device, Buffers.indexBufferMemory[0], VkUtils2.MemSys.pAllocator());
+//        vkFreeMemory(device, UniformBufferObject.uniformBuffersMemory[0], VkUtils2.MemSys.pAllocator());
+//        vkDestroyBuffer(device, UniformBufferObject.uniformBuffers[0], VkUtils2.MemSys.pAllocator());
+        vkFreeMemory(device, UniformBufferObject.uniformBuffersMemory[1], VkUtils2.MemSys.pAllocator());
+        vkDestroyBuffer(device, UniformBufferObject.uniformBuffers[1], VkUtils2.MemSys.pAllocator());
+
+       /* vkDestroyImage(device, Buffers.vkImage[0], null);
+
+        vkFreeMemory(device, Buffers.vkAllocMemory[0], null);
+
+        vkDestroySampler(device, UniformBufferObject.textureSampler[0], null);
+
+        vkDestroyImageView(device, UniformBufferObject.textureImageView[0], null);
+*/
+    }
+
     private static void _mainDeletionQueue()
     {
         doDestroyFreeAlloc(Buffers.vkImage[0], Buffers.capabilities.vkDestroyImage);
@@ -52,19 +76,23 @@ final class renderer2 {
 
         {
             vkDestroySemaphore(device, Renderer2.AvailableSemaphore[0], VkUtils2.MemSys.pAllocator());
-//                vkDestroySemaphore(device, VkUtils2.Renderer.FinishedSemaphore[0], pAllocator);
+                vkDestroySemaphore(device, Renderer2.FinishedSemaphore[0], VkUtils2.MemSys.pAllocator());
             //vkDestroyFence(device, Renderer2.vkFence[0], VkUtils2.MemSysm.pAllocator());
         }
         vkDestroyDescriptorSetLayout(device, UniformBufferObject.descriptorSetLayout[0], VkUtils2.MemSys.pAllocator());
         vkDestroyDescriptorPool(device, UniformBufferObject.descriptorPool[0], VkUtils2.MemSys.pAllocator());
+            vkDestroySwapchainKHR(device, VkUtils2.SwapChainSupportDetails.swapChain[0], VkUtils2.MemSys.pAllocator());
+            vkDestroyImage(device, Buffers.vkImage[0], VkUtils2.MemSys.pAllocator());
         for (int i = 0; i < VkUtils2.SwapChainSupportDetails.swapChainFramebuffers.length; i++)
         {
-            vkDestroySwapchainKHR(device, VkUtils2.SwapChainSupportDetails.swapChainImages[i], VkUtils2.MemSys.pAllocator());
             vkDestroyImageView(device, VkUtils2.SwapChainSupportDetails.swapChainImageViews[i], VkUtils2.MemSys.pAllocator());
+//            vkDestroyImage(device,  VkUtils2.SwapChainSupportDetails.swapChainImages[i], VkUtils2.MemSys.pAllocator());
             vkFreeCommandBuffers(device, Buffers.commandPool[0], Buffers.commandBuffers[i]);
             vkDestroyFramebuffer(device, VkUtils2.SwapChainSupportDetails.swapChainFramebuffers[i], VkUtils2.MemSys.pAllocator());
+/*
             vkFreeMemory(device, UniformBufferObject.uniformBuffersMemory[i], VkUtils2.MemSys.pAllocator());
             vkDestroyBuffer(device, UniformBufferObject.uniformBuffers[i], VkUtils2.MemSys.pAllocator());
+*/
 
         }
         {
@@ -75,11 +103,11 @@ final class renderer2 {
 
 
 //            vkFreeMemory(Queues.device, PipeLine.stagingBufferMemory, pAllocator);
-        vkFreeMemory(device, Buffers.vertexBufferMemory[0], VkUtils2.MemSys.pAllocator());
-        vkFreeMemory(device, Buffers.indexBufferMemory[0], VkUtils2.MemSys.pAllocator());
-        vkDestroyBuffer(device, Buffers.vertexBuffer[0], VkUtils2.MemSys.pAllocator());
+//        vkFreeMemory(device, Buffers.vertexBufferMemory[0], VkUtils2.MemSys.pAllocator());
+//        vkFreeMemory(device, Buffers.indexBufferMemory[0], VkUtils2.MemSys.pAllocator());
+//        vkDestroyBuffer(device, Buffers.vertexBuffer[0], VkUtils2.MemSys.pAllocator());
 //            vkDestroyBuffer(Queues.device, PipeLine.stagingBuffer, pAllocator);
-        vkDestroyBuffer(device, Buffers.indexBuffer[0], VkUtils2.MemSys.pAllocator());
+//        vkDestroyBuffer(device, Buffers.indexBuffer[0], VkUtils2.MemSys.pAllocator());
         vkDestroyCommandPool(device, Buffers.commandPool[0], VkUtils2.MemSys.pAllocator());
 
         vkDestroyPipeline(device, Buffers.graphicsPipeline, VkUtils2.MemSys.pAllocator());
