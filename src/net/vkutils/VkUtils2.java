@@ -483,7 +483,7 @@ public final class VkUtils2 {
                         .height(swapChainExtent.height())
                         .layers(1)
                         .pAttachments(attachments)
-//                       .flags(VK12.VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT)
+                       .flags(VK12.VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT)
                         .pNext(vkFramebufferAttachmentsCreateInfo)
                         .attachmentCount(attachments.capacity());
 
@@ -1010,13 +1010,15 @@ public final class VkUtils2 {
                     queueCreateInfos.queueFamilyIndex(uniqueQueueFamilies[i]);
                     queueCreateInfos.pQueuePriorities(MemSys.stack().floats(1.0f));
                 }
-                VkPhysicalDeviceVulkan12Features deviceVulkan12Features = VkPhysicalDeviceVulkan12Features.malloc(MemSys.stack()).sType$Default()
+                VkPhysicalDeviceVulkan12Features deviceVulkan12Features = VkPhysicalDeviceVulkan12Features.calloc(MemSys.stack()).sType$Default()
                         .imagelessFramebuffer(true)
                         .descriptorBindingPartiallyBound(true);
 
 
-                VkPhysicalDeviceFeatures2 deviceFeatures2 = VkPhysicalDeviceFeatures2.malloc(MemSys.stack()).sType$Default()
+                VkPhysicalDeviceFeatures2 deviceFeatures2 = VkPhysicalDeviceFeatures2.calloc(MemSys.stack()).sType$Default()
                         .pNext(deviceVulkan12Features);
+
+                VkPhysicalDeviceFeatures deviceFeatures = VkPhysicalDeviceFeatures.calloc(MemSys.stack());
 
 
                 //.fillModeNonSolid(true) //dneeded to adres valditaion errors when using VK_POLIGYON_MODE_LINE or POINT
@@ -1024,9 +1026,11 @@ public final class VkUtils2 {
 //                        .geometryShader(true);
 //                        .pipelineStatisticsQuery(true)
 //                        .alphaToOne(false);
-                VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.malloc(MemSys.stack()).sType$Default()
-                        .pNext(deviceFeatures2);
                 VK11.vkGetPhysicalDeviceFeatures2(Queues.physicalDevice, deviceFeatures2);
+                VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.malloc(MemSys.stack()).sType$Default()
+                        .pNext(deviceVulkan12Features)
+                        .pNext(deviceFeatures2)
+                                .pEnabledFeatures(deviceFeatures);
 
 //                createInfo.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
 //                MemSysm.Memsys2.free(queueCreateInfos);
