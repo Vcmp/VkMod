@@ -21,7 +21,7 @@ import static vkutils.VkUtils2.Queues.device;
 
 final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*implements MemoryAllocator*/ {
 
-//    protected static final VkAllocationCallbacks pAllocator = null;
+    //    protected static final VkAllocationCallbacks pAllocator = null;
     //int m = JEmalloc.je_mallctl()
     private static final long[] pDummyPlacementPointerAlloc = {0};
     static long stacks;
@@ -111,6 +111,26 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         return l;//memAddress0(LibCStdlib.malloc(size));
 //        return LibCStdlib.nmalloc(Integer.toUnsignedLong(size));//memAddress0(LibCStdlib.malloc(size));
     }
+    public static long malloc2(long size)
+    {
+        return address;
+        /*final long l = JEmalloc.nje_malloc(1);
+        if(tracker.getOrDefault(l, 0L)==size)
+        {
+            System.err.println("WARN:M: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
+            return l;
+        }
+        if(Memsys2.contains(l))
+        {
+            System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
+
+        }
+        System.out.println("AllocatingM: " + size + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
+        stacks += size;
+        tracker.put(l, size);
+        return l;//memAddress0(LibCStdlib.malloc(size));*/
+//        return LibCStdlib.nmalloc(Integer.toUnsignedLong(size));//memAddress0(LibCStdlib.malloc(size));
+    }
 
     public static long mallocLongPtr(long descriptorSets)
     {
@@ -173,10 +193,10 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     }
 
     /*todo: Java cannot handle/Wiriting>erading to references are not fully initlaised unliek C++ without wiring throiwng an NullPOinterException imemdiately, hense why this function was setup to make hanlding rfeernces less of a nuicience with javaa
-        * the static inle Array acts as a menas of containg references when written to after an API call from Vulkan, which allow for reaidnga dn wiritng to references. dierctly without the need for intermediate structis such as Pointer/LongBuffers
-        * and reducing pressure on the MemeoryStack SImulatbeously/In the Process
-        * Unfortuately this lilely will never get as fast as the NCthe nativ eimpelation fo wiritng to refercnes as with posible with C++ as well aa the interent overead of function body calls and pasing paraaters
-        * a fueld refercne is also used just in case dynamically allating with new is less effcienct that sinly wiritng to a static final Reference/memory adress instead
+     * the static inle Array acts as a menas of containg references when written to after an API call from Vulkan, which allow for reaidnga dn wiritng to references. dierctly without the need for intermediate structis such as Pointer/LongBuffers
+     * and reducing pressure on the MemeoryStack SImulatbeously/In the Process
+     * Unfortuately this lilely will never get as fast as the NCthe nativ eimpelation fo wiritng to refercnes as with posible with C++ as well aa the interent overead of function body calls and pasing paraaters
+     * a fueld refercne is also used just in case dynamically allating with new is less effcienct that sinly wiritng to a static final Reference/memory adress instead
      */
     static long doPointerAllocSafeA(@NotNull Pointer allocateInfo, long vkCreateBuffer) {
         //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator(), pVertexBufferMemory);
@@ -226,11 +246,11 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 //        return nmemCallocChecked(1, 8);
     }
 
-     static final class Memsys2 {
+    static final class Memsys2 {
 
-         private static final LongBuffer removed = memLongBuffer(address+64L, 64);
+        private static final LongBuffer removed = memLongBuffer(address+64L, 64);
 
-         static void doPointerAllocSafe2(Pointer allocateInfo, long vkCreateBuffer, long[] a)
+        static void doPointerAllocSafe2(Pointer allocateInfo, long vkCreateBuffer, long[] a)
         {
             //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
             free(allocateInfo);
@@ -298,35 +318,35 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             JEmalloc.je_free(ptr);
         }
 
-         static VkCommandBuffer doPointerAllocAlt(long allocateInfo, long vkAllocateCommandBuffers) {
+        static VkCommandBuffer doPointerAllocAlt(long allocateInfo, long vkAllocateCommandBuffers) {
             //            vkAllocateMemory(device, allocateInfo, pAllocator(), pVertexBufferMemory);
             callPPPI(device.address(), allocateInfo, pDummyPlacementPointerAlloc, vkAllocateCommandBuffers);
             return new VkCommandBuffer(pDummyPlacementPointerAlloc[0], device);
 
         }
 
-         //static final long MemMainAllC = JEmalloc.nje_mallocx(128, 0);
-          private static void checkCall(int callPPPPI)
-         {
-             switch (callPPPPI)
-             {
-                 case VK_NOT_READY -> throw new RuntimeException("Not ready!");
-                 case VK_TIMEOUT -> throw new RuntimeException("Bad TimeOut!");
-                 default -> {
-                 }
-             }
-         }
+        //static final long MemMainAllC = JEmalloc.nje_mallocx(128, 0);
+        private static void checkCall(int callPPPPI)
+        {
+            switch (callPPPPI)
+            {
+                case VK_NOT_READY -> throw new RuntimeException("Not ready!");
+                case VK_TIMEOUT -> throw new RuntimeException("Bad TimeOut!");
+                default -> {
+                }
+            }
+        }
 
-         private static boolean contains(long l)
-         {
-             //removed.rewind();
-             for (int i = 0; i< removed.limit(); i++)
-             {
-                 if(removed.get(i)==l)
-                     return true;
-             }
-             return false;
-         }
+        private static boolean contains(long l)
+        {
+            //removed.rewind();
+            for (int i = 0; i< removed.limit(); i++)
+            {
+                if(removed.get(i)==l)
+                    return true;
+            }
+            return false;
+        }
 
        /* @Override
         public boolean equals(Object obj)
