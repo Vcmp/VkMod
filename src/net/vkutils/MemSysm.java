@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.lwjgl.system.Checks;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.Pointer;
+import org.lwjgl.system.Struct;
 import org.lwjgl.system.jemalloc.JEmalloc;
 import org.lwjgl.vulkan.*;
 
@@ -24,9 +25,11 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     //    protected static final VkAllocationCallbacks pAllocator = null;
     //int m = JEmalloc.je_mallctl()
     private static final long[] pDummyPlacementPointerAlloc = {0};
+    private static long frame=0;
     static long stacks;
-    static final HashMap<Long, Long> tracker= new HashMap<>();
-    static final long address = JEmalloc.nje_malloc(0)+VkMemoryRequirements.SIZEOF;//nmemAllocChecked(Pointer.POINTER_SIZE);
+    static final HashMap<Long, Long> tracker = new HashMap<>();
+    static final long size = 1023;
+    static final long address = JEmalloc.nje_mallocx(size, JEmalloc.MALLOCX_ARENA(2))+VkMemoryRequirements.SIZEOF;//nmemAllocChecked(Pointer.POINTER_SIZE);
 
     public static long mallocM(long num, long size)
     {
@@ -110,10 +113,13 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         tracker.put(l, size);
         return l;//memAddress0(LibCStdlib.malloc(size));
 //        return LibCStdlib.nmalloc(Integer.toUnsignedLong(size));//memAddress0(LibCStdlib.malloc(size));
-    }
+    }//Exploit Java freeing;/Dealloctaing/freeing/removing from Heap obejsts intilaised in fuctions nor returned as an arument.paraamter.object to aovid teh need to explcitly free/rrset the Frame.pffset.Indicies/rlatvieoptiianing/mpelemnst/ocucurneces.//occupations/Ranges/wodtsh./offsets/Psootions/atcual Adresses/initialistaions/Atcua;istaions tracked alloctaions
     public static long malloc2(long size)
     {
-        return address;
+//        JEmalloc.nje_sdallocx();
+        System.out.println(JEmalloc.nje_malloc_usable_size(address));
+        frame += size;
+        return address+frame;
         /*final long l = JEmalloc.nje_malloc(1);
         if(tracker.getOrDefault(l, 0L)==size)
         {
@@ -230,6 +236,11 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         return a;
     }
 
+    public static long sizeof(long address)
+    {
+        return JEmalloc.nje_sallocx(address, 0);
+    }
+
     public long nmalloc(int a)
     {
         return stack.nmalloc(Pointer.POINTER_SHIFT, a);   //stack.ncalloc(Pointer.POINTER_SHIFT, a,  Pointer.POINTER_SIZE);
@@ -258,13 +269,27 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             Checks.check(allocateInfo.address());
             checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, a, vkCreateBuffer));
         }
+        static void doPointerAllocSafe3(Struct allocateInfo, long vkCreateBuffer, long a)
+        {
+            //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
+            free(allocateInfo);
+            System.out.println("Attempting to Call: ->" + allocateInfo);
+            Checks.check(allocateInfo.address());
+            checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, a, vkCreateBuffer));
+//            malloc2(allocateInfo.sizeof())
+        }
+
+        private static void free2(Struct allocateInfo)
+        {
+            frame-=allocateInfo.sizeof();
+        }
 
         static void free(@NotNull Pointer ptr)
         {
             final long orDefault = tracker.getOrDefault(ptr.address(), 0L);
             final long stacks = memGetLong(ptr.address());//+ orDefault;
             if (stacks == 0 || orDefault == 0) {
-                throw new UnsupportedOperationException("Warn: Don't Need to free!: " + ptr + "" + ptr.address());
+                System.err.println("Warn: Don't Need to free!: " + ptr + "" + ptr.address());
             }
             System.out.println("            Freeing: ->" + ptr + "Size: " + stacks + " Addr: " + ptr.address() + "Current allocations: " + MemSysm.stacks + "-->"+Thread.currentThread().getStackTrace()[2]);
             MemSysm.stacks -= stacks;

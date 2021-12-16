@@ -3,6 +3,7 @@ package vkutils;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.JNI.invokePI;
+import static org.lwjgl.system.MemoryUtil.memGetLong;
 
 public final class VkMod {
 static boolean a = true;
@@ -11,6 +12,25 @@ static boolean a = true;
     public static void main(String[] args)
     {
         //System.out.println(Paths.get("").toAbsolutePath().toString());
+
+        ScalarArray scalarArray = new ScalarArray(4);
+        scalarArray.Put(0, 1120);
+        scalarArray.Put(1, 10);
+        scalarArray.Put(2, 34);
+        scalarArray.Put(3, 34, 35, 36);
+        long aLongx = scalarArray.getLong(0);
+        long aLong = scalarArray.getLong(1);
+        long aLong1 = scalarArray.getLong(2);
+        long aLong2 = scalarArray.getLong(3);
+        long aLong3 = scalarArray.getLong(4);
+        long aLong4 = scalarArray.getLong(5);
+        System.out.println(aLongx);
+        System.out.println(aLong);
+        System.out.println(aLong1);
+        System.out.println(aLong2);
+        System.out.println(aLong3);
+        System.out.println(aLong4);
+        scalarArray.Del();
         VkUtils2.extracted();
 
 

@@ -1,14 +1,14 @@
 package vkutils;
 
+import org.joml.Matrix4f;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
 
 public final class GLU2 {
-
-    public static final class theGLU {
-
-        private static final Unsafe UNSAFE;
+public static final class theUnSafe
+{
+    static final Unsafe UNSAFE;
 
 
        /* public static final FloatBuffer MODView = BufferUtils.createFloatBuffer(0x1FFFFF);
@@ -19,7 +19,7 @@ public final class GLU2 {
                 0, 1, 0, 0,
                 0, 0, 1, 0,
                 0, 0, 0, 1};*/
-        //private static final int offset = 16;
+    //private static final int offset = 16;
         /*private static final FloatBuffer matrix2 = BufferUtils.createFloatBuffer(offset).put((MATRIX), 0, (MATRIX).length);
 
 
@@ -34,23 +34,27 @@ public final class GLU2 {
                 0.0F, 0.0F, 1.0F, -1.0F,
                 0.0F, 0.0F, -2.0F * 0.05F, FOVModifier};*/
 
-        static {
-            UNSAFE=extracted();
+    static {
+        UNSAFE=extracted();
 
 
+    }
+
+    private static Unsafe extracted()
+    {
+        try {
+            Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+            theUnsafe.setAccessible(true);
+            return (Unsafe) theUnsafe.get(null);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
         }
+        return null;
+    }
+}
+    public static final class theGLU {
 
-        private static Unsafe extracted()
-        {
-            try {
-                Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-                theUnsafe.setAccessible(true);
-                return (Unsafe) theUnsafe.get(null);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
+
 
 
        /* private static void __gluMakeIdentityf() {
@@ -87,22 +91,22 @@ public final class GLU2 {
             return UNSAFE.getLong(obj, offset);
         }*/
         public static long getPointer(Object obj, long offset) {
-            return UNSAFE.getLong(obj, offset);
+            return theUnSafe.UNSAFE.getLong(obj, offset);
         }public static long getPointer(long offset) {
-            return UNSAFE.getLong(null, offset);
+            return theUnSafe.UNSAFE.getLong(null, offset);
         }
 
         public static void memcpy(long srcAddress, long dstAddress, long Bytes)
         {
-            UNSAFE.copyMemory(srcAddress, dstAddress, Bytes);
+            theUnSafe.UNSAFE.copyMemory(srcAddress, dstAddress, Bytes);
         }
         public static void memcpy(Object o, long srcAddress, Object o2, long dstAddress, long Bytes)
         {
-            UNSAFE.copyMemory(o, srcAddress, null, dstAddress, Bytes);
+            theUnSafe.UNSAFE.copyMemory(o, srcAddress, null, dstAddress, Bytes);
         }
         public static long alloc(long a)
         {
-            return UNSAFE.allocateMemory(a);
+            return theUnSafe.UNSAFE.allocateMemory(a);
         }
 
         //todo: Might be posible to use X Orientation as the xasis argmnt as a varyin Axis
@@ -251,13 +255,13 @@ public final class GLU2 {
 
         public static void memcpy2(float[] vertices, long handle, int l)
         {
-            UNSAFE.copyMemory(vertices, 16, null, handle, l);
+            theUnSafe.UNSAFE.copyMemory(vertices, 16, null, handle, l);
         }
 
 
         public static void memcpy2(short[] vertices, long handle, long l)
         {
-            UNSAFE.copyMemory(vertices, 16, null, handle, l);
+            theUnSafe.UNSAFE.copyMemory(vertices, 16, null, handle, l);
         }
 
         //        static <T extends Buffer> T wrap(Class<? extends T> clazz, long address, int capacity) {

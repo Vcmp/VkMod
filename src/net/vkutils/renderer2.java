@@ -30,7 +30,7 @@ final class renderer2 {
         _mainDeletionQueue();
 
         vkDestroyDevice(device, VkUtils2.MemSys.pAllocator());
-        vkDestroySurfaceKHR(VkUtils2.vkInstance, surface, VkUtils2.MemSys.pAllocator());
+        vkDestroySurfaceKHR(VkUtils2.vkInstance, surface[0], VkUtils2.MemSys.pAllocator());
         vkDestroyInstance(VkUtils2.vkInstance, VkUtils2.MemSys.pAllocator());
         /*glfwDestroyWindow(window);*/
 
@@ -112,13 +112,12 @@ final class renderer2 {
         private static final long address2;
         private static final long UINT64_MAX = 0xFFFFFFFFFFFFFFFFL;
         private static final long TmUt = 1000000000;
-        private static final long pointerBuffer = (stack2.getAddress() + stack2.getSize());
-//        private static final VKCapabilitiesDevice capabilities1 = Queues.graphicsQueue.getCapabilities();
+        //        private static final VKCapabilitiesDevice capabilities1 = Queues.graphicsQueue.getCapabilities();
 //        private static final long vkAcquireNextImageKHR = PipeLine.capabilities.vkAcquireNextImageKHR;
         //                 vkWaitForFences(Queues.device, longs, true, UINT64_MAX);
 
         // Align address to the specified alignment
-        private static final long address3 = stack2.getAddress() + stack2.getPointer() - 4 & -4L;
+        private static final long address3 = MemSysm.address  + stack2.getPointer() - 4 & -4L;
 //        static int a;
 
 //                    VkPresentInfoKHR calloc = VkPresentInfoKHR.calloc(stack.stack())
@@ -145,6 +144,8 @@ final class renderer2 {
         static int i;
         //static int FenceStat;
         static int currentFrame;
+        private final static long aa = memGetLong(MemSysm.address)+0x200;
+
 
         static {
             {
@@ -194,7 +195,7 @@ final class renderer2 {
                     VkPresentInfoKHR.nsType(VkPresentInfoKHR1, VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
                     memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PWAITSEMAPHORES, (AvailableSemaphore[0]));
                     memPutInt(VkPresentInfoKHR1 + VkPresentInfoKHR.SWAPCHAINCOUNT, 1);
-                    memPutLong(address2 + VkSubmitInfo.PCOMMANDBUFFERS, (pointerBuffer));
+                    memPutLong(address2 + VkSubmitInfo.PCOMMANDBUFFERS, ((MemSysm.address + MemSysm.size)));
                     VkSubmitInfo.ncommandBufferCount(address2, 1);
                     memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PIMAGEINDICES, address3);
                     memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PSWAPCHAINS, memAddress0(memLongBuffer(stack2.getAddress(), 1).put(0, VkUtils2.SwapChainSupportDetails.swapChain)));
@@ -257,7 +258,7 @@ final class renderer2 {
                 i += nvkAcquireNextImageKHR(device, VkUtils2.SwapChainSupportDetails.swapChain[0], TmUt, AvailableSemaphore[0], VK_NULL_HANDLE, address3);
 
 
-                renderer2.UniformBufferObject.updateUniformBuffer(1);
+                renderer2.UniformBufferObject.updateUniformBuffer();
 //                PipeLine.imagesInFlight.get(PipeLine.currentFrame);
                 //Wait frames
 
@@ -274,7 +275,7 @@ final class renderer2 {
 //                    vkWaitForFences(Queues.device, vkFence, false, TmUt);
 
 
-                memPutLong(pointerBuffer, Buffers.commandBuffers[currentFrame].address());
+                memPutLong((MemSysm.address + MemSysm.size), Buffers.commandBuffers[currentFrame].address());
 
                 i += nvkQueueSubmit(graphicsQueue, 1, address2, VK_NULL_HANDLE);
 
@@ -283,7 +284,7 @@ final class renderer2 {
                 memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PWAITSEMAPHORES, (AvailableSemaphore[0]));
 
 
-                i += nvkQueuePresentKHR(presentQueue, VkPresentInfoKHR1);
+                i += nvkQueuePresentKHR(graphicsQueue, VkPresentInfoKHR1);
 //                   i+= vkResetFences(Queues.device, vkFenceA);
 
 
@@ -632,7 +633,7 @@ final class renderer2 {
 
             VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
-            long vkBufferCopy = MemSysm.malloc(VkBufferCopy.SIZEOF);
+            long vkBufferCopy = MemSysm.address;
             VkBufferCopy.nsrcOffset(vkBufferCopy, 0);
             VkBufferCopy.ndstOffset(vkBufferCopy, 0);
             VkBufferCopy.nsize(vkBufferCopy, size);
@@ -644,7 +645,7 @@ final class renderer2 {
 
         static @NotNull VkCommandBuffer beginSingleTimeCommands() {
 
-            final long allocateInfo = MemSysm.malloc(VkCommandBufferAllocateInfo.SIZEOF);
+            final long allocateInfo = MemSysm.malloc2(0);
             VkCommandBufferAllocateInfo.nsType(allocateInfo, VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
             VkCommandBufferAllocateInfo.nlevel(allocateInfo, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
             VkCommandBufferAllocateInfo.ncommandPool(allocateInfo, commandPool[0]);
@@ -667,15 +668,15 @@ final class renderer2 {
 
 //            VkSubmitInfo.ncommandBufferCount(submitInfo1, 1);
 
-            nvkQueueSubmit(graphicsQueue, 1, submitInfo1.address(), VK_NULL_HANDLE);
-            callPI(graphicsQueue.address(), graphicsQueue.getCapabilities().vkQueueWaitIdle);
+            nvkQueueSubmit(presentQueue, 1, submitInfo1.address(), VK_NULL_HANDLE);
+//            callPI(presentQueue.address(), presentQueue.getCapabilities().vkQueueWaitIdle);
             MemSysm.Memsys2.free8(pointers);
             nvkFreeCommandBuffers(device, commandPool[0], 1, pointers);
         }
 
         static void createDescriptorSetLayout() {
             {
-                VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.create(MemSysm.malloc(VkDescriptorSetLayoutBinding.SIZEOF), 2);
+                VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.create(MemSysm.malloc2(VkImageViewCreateInfo.SIZEOF), 2);
                /*  long[] bindings = {
                          stack.stack().ncalloc(VkDescriptorSetLayoutBinding.ALIGNOF, 1, VkDescriptorSetLayoutBinding.SIZEOF),
                          stack.stack().ncalloc(VkDescriptorSetLayoutBinding.ALIGNOF, 1, VkDescriptorSetLayoutBinding.SIZEOF)
@@ -708,7 +709,7 @@ final class renderer2 {
                         .stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
 
 
-                VkDescriptorSetLayoutCreateInfo a = VkDescriptorSetLayoutCreateInfo.create(MemSysm.malloc(VkDescriptorSetLayoutCreateInfo.SIZEOF))
+                VkDescriptorSetLayoutCreateInfo a = VkDescriptorSetLayoutCreateInfo.create(MemSysm.malloc2(VkDescriptorSetLayoutBinding.SIZEOF*2L))
                         .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO)
                         .pBindings(bindings);
                 //                 memPutAddress(a + VkDescriptorSetLayoutCreateInfo.PBINDINGS, bindings[1]);
@@ -777,8 +778,9 @@ final class renderer2 {
 
         //        private static final Matrix4f model = new Matrix4f().identity().determineProperties();
         //private static final Matrix4f proj = new Matrix4f().identity().determineProperties();
-        private static final Matrix4f proj;//= new Matrix4f().identity();
-        private static final Matrix4f proj4= new Matrix4f().identity();
+        private static final Matrix4f mvp;// = new Matrix4f().identity();
+        private static Matrix4f pers= new Matrix4f();
+        private static final Matrix4f proj4= new Matrix4f();
         private static final float[] proj2=new float[16];
         static final long[] descriptorSetLayout = {0};
         //        private static LongBuffer pDescriptorSetLayout;
@@ -794,19 +796,23 @@ final class renderer2 {
         static final long[] textureImageView = {0};
         static final long[] textureSampler = {0};
 
-        private static final float zFar = 20.0f;
+        private static final float zFar = 120.0f;
 
         private static final float zNear = 3.1f;
         private static final int i=0;
 
+        private static final Matrix4f trans = new Matrix4f();
+
+        private static final Matrix4f view = new Matrix4f().determineProperties().setLookAt(2.0f, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+
         static {
-            proj = new Matrix4f().identity().determineProperties().identity().m00(1.0f / (h * (VkUtils2.SwapChainSupportDetails.swapChainExtent.width() / (float) VkUtils2.SwapChainSupportDetails.swapChainExtent.height())))
+            mvp = new Matrix4f().determineProperties().m00(1.0f / (h * (VkUtils2.SwapChainSupportDetails.swapChainExtent.width() / (float) VkUtils2.SwapChainSupportDetails.swapChainExtent.height())))
                     .m11((1.0f / h) * -1)
                     .m22((zFar + zNear) / (zNear - zFar))
                     .m32((zFar + zFar) * zNear / (zNear - zFar))
                     .m23(-1.0f);
-            proj.mulPerspectiveAffine(new Matrix4f().identity().determineProperties().setLookAt(2.0f, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f));
-            proj.translate(new Vector3f(-4, -4, -4));
+            mvp.mulPerspectiveAffine(new Matrix4f().determineProperties().setLookAt(2.0f, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f));
+            mvp.translate(new Vector3f(-4, -4, -4));
 //            proj.get(proj2);
 
 //                proj2.put(proj3).re();
@@ -831,7 +837,7 @@ final class renderer2 {
             }
         }
 
-        static void updateUniformBuffer(int pImageIndex)
+        static void updateUniformBuffer()
         {
 
             /*if(pImageIndex%2==0)
@@ -843,32 +849,34 @@ final class renderer2 {
 
             //            model.identity();
 //            System.arraycopy(proj3, 0, proj2, 0, proj2.length);
-           /* mulAffineL(
+            /*mulAffineL(
                     (float) Math.sin(angle),
                     (float) Math.cos(angle+Half_Pi)
             );*/
 
 //            proj4.set(proj);
+//            pers = new Matrix4f().setPerspective(h*-1,(VkUtils2.SwapChainSupportDetails.swapChainExtent.width() / (float) VkUtils2.SwapChainSupportDetails.swapChainExtent.height()),
+//                    zFar, zNear);
+//            mvp.mul(pers);
+//            mvp.mulPerspectiveAffine(view);
+//            trans.setTranslation(new Vector3f(-4, -4, -4));//.rotate((float) angle, 0, 0, 1, mvp);
+//            mvp.mul(trans).getToAddress(Renderer2.aa);
+//            trans.rotate((float) angle, 0, 0, 1, proj4);
 
 //            proj4.determineProperties();
-            proj.rotateAffine((float) angle, 0, 0, 1, proj4);
+            mvp.rotate((float) angle, 0, 0, 1, trans).getToAddress(Renderer2.aa);
 //                proj2.put(proj3).re();
 
-            //._properties(Madtrix4fc.PROPERTY_AFFINE | Matrix4fc.PROPERTY_ORTHONORMAL);
-//            model.m00(cos).m01(sin).m10(-sin).m11(cos);//.mulOrthoAffine(proj);//._properties(Matrix4fc.PROPERTY_AFFINE | Matrix4fc.PROPERTY_ORTHONORMAL);
-//            abs.identity().mul(proj);
-//            abs.determineProperties();
-//            proj.determineProperties();
-//            abs.set(proj);
-            //.add(model);
-
-            //                    .properties(Matrix4fc.PROPERTY_PERSPECTIVE);
-
-            {
-                memcpy(MemSysm.getHandle(pImageIndex));
-            }
 
         }
+
+        private static void memcpy4()
+        {
+            for (int i=0;i<16;i++)
+            GLU2.theUnSafe.UNSAFE.putFloat(null, Renderer2.aa+ (i << 2), proj2[i]);
+
+        }
+
         private static void mulAffineL(
                 float r01,
                 float r11) {
@@ -899,7 +907,7 @@ final class renderer2 {
 
         static void createDescriptorPool() {
             {
-                VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.create(MemSysm.calloc(2, VkDescriptorPoolSize.SIZEOF), 2);
+                VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.create(MemSysm.malloc2(0), 2);
 //                        .type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
 //                        .descriptorCount(PipeLine.swapChainImages.length);
                 VkDescriptorPoolSize uniformBufferPoolSize = poolSize.get(0)
@@ -909,7 +917,7 @@ final class renderer2 {
                 VkDescriptorPoolSize textureSamplerPoolSize = poolSize.get(1)
 //                        .type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
                         .descriptorCount(VkUtils2.SwapChainSupportDetails.swapChainImages.length);
-                VkDescriptorPoolCreateInfo poolCreateInfo = VkDescriptorPoolCreateInfo.create(MemSysm.calloc(1, VkDescriptorPoolCreateInfo.SIZEOF)).sType$Default()
+                VkDescriptorPoolCreateInfo poolCreateInfo = VkDescriptorPoolCreateInfo.create(MemSysm.malloc2(poolSize.sizeof()*8L)).sType$Default()
 //                        .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO)
                         .pPoolSizes(poolSize)
                         .maxSets(VkUtils2.PipeLine.swapChainImages.length);
@@ -925,7 +933,7 @@ final class renderer2 {
                     layouts.put(i, descriptorSetLayout);
                 }
 
-                VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.create(MemSysm.calloc(1, VkDescriptorSetAllocateInfo.SIZEOF)).sType$Default();
+                VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.create(MemSysm.malloc2(0)).sType$Default();
 //                allocInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
                 allocInfo.descriptorPool(descriptorPool[0])
                         .pSetLayouts(layouts);
@@ -934,16 +942,16 @@ final class renderer2 {
 //                nmemFree(allocInfo.address());
                 vkAllocateDescriptorSets(device, allocInfo, descriptorSets);
 
-                VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.create(MemSysm.calloc(1, VkDescriptorBufferInfo.SIZEOF),1)
+                VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.create(MemSysm.malloc2(0),1)
                         .offset(0)
                         .range(capacity);
 
-                VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.create(MemSysm.calloc(1, VkDescriptorImageInfo.SIZEOF),1)
+                VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.create(MemSysm.malloc2(bufferInfo.sizeof()),1)
                         .imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                         .imageView(textureImageView[0])
                         .sampler(textureSampler[0]);
 
-                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.create(MemSysm.calloc(2, VkWriteDescriptorSet.SIZEOF),2);
+                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.create(MemSysm.malloc2(imageInfo.sizeof()),2);
 
                 VkWriteDescriptorSet vkWriteDescriptorSet = descriptorWrites.get(0).sType$Default()
 //                        .sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
