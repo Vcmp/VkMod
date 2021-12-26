@@ -5,9 +5,10 @@ import org.jetbrains.annotations.NotNull;
 import org.lwjgl.system.jemalloc.JEmalloc;
 
 final class ScalarArray {
-    private final long address ;
-    private final long aLong;
-    private int capacity;
+    private final long address;
+    private static long aLong;
+    private static int capacity;
+    private static int lim;
 
     public <T extends Number>ScalarArray(@NotNull Number a)
     {
@@ -16,20 +17,41 @@ final class ScalarArray {
         aLong = Long.BYTES;
     }
 
-    long getLong(int ref)
+
+
+    long get()
+    {
+//        capacity--;
+        return GLU2.theUnSafe.UNSAFE.getLong(address+(lim*aLong));
+    }long getLong(int ref)
     {
         capacity--;
         return GLU2.theUnSafe.UNSAFE.getLong(address+(ref*aLong));
+    }
+    long getLongSafe(int ref)
+    {
+        capacity--;
+        return GLU2.theUnSafe.UNSAFE.getLong(address+(ref*aLong))|1;
     }
 
     void Put(int ref, long v)
     {
             GLU2.theUnSafe.UNSAFE.putLong(address + (ref * aLong), v);
+            lim++;
     }
-    void Put(int ref, long @NotNull ... v)
+    void Put(long @NotNull ... v)
+    {
+        for (long a: v)
+            GLU2.theUnSafe.UNSAFE.putLong(address + (lim++ * aLong), a);
+    } void Put(Long ref, long @NotNull ... v)
     {
         for (long a: v)
             GLU2.theUnSafe.UNSAFE.putLong(address + (ref++ * aLong), a);
+        lim+=v.length;
+    }
+    void Put(long v)
+    {
+            GLU2.theUnSafe.UNSAFE.putLong(address + (lim++ * aLong), v);
     }
 
     public long[] getArray(int a, int b)
@@ -54,6 +76,36 @@ final class ScalarArray {
     public void CopyOf(int offset, @NotNull ScalarArray a)
     {
         GLU2.theUnSafe.UNSAFE.copyMemory(address, a.getAddress(), (capacity-(offset))*aLong);
+    }
+
+    public @NotNull ScalarArray Dup2(int offset, long address, long varargs)
+    {
+        ScalarArray a = null;
+        try {
+            a = (ScalarArray) GLU2.theUnSafe.UNSAFE.allocateInstance(ScalarArray.class);
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        }
+
+        GLU2.theUnSafe.UNSAFE.putLong(a.getAddress(), offset, address);
+        GLU2.theUnSafe.UNSAFE.putLong(a.getAddress(), 24, varargs);
+        return a;
+    }
+
+    @Contract(pure = true)
+    public ScalarArray Dup2Safe()
+    {
+       ScalarArray a = this;
+        GLU2.theUnSafe.UNSAFE.putLong(a, lim, a.getAddress()+lim);
+        return a;
+    }
+
+    public void showAll()
+    {
+        for(int a=0; a<lim; a++)
+        {
+            System.out.println(getLong(a));
+        }
     }
 
     @Contract(pure = true)

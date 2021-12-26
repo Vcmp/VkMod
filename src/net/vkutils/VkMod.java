@@ -3,22 +3,22 @@ package vkutils;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.JNI.invokePI;
-import static org.lwjgl.system.MemoryUtil.memGetLong;
 
 public final class VkMod {
 static boolean a = true;
-    private static boolean aa;
+//    private static boolean aa;
 
     public static void main(String[] args)
     {
         //System.out.println(Paths.get("").toAbsolutePath().toString());
 
-        ScalarArray scalarArray = new ScalarArray(4);
-        scalarArray.Put(0, 1120);
-        scalarArray.Put(1, 10);
-        scalarArray.Put(2, 34);
-        scalarArray.Put(3, 34, 35, 36);
-        long aLongx = scalarArray.getLong(0);
+//        ScalarArray scalarArray = new ScalarArray(4);
+//        scalarArray.Put(1120);
+//        scalarArray.Put(10);
+//        scalarArray.Put(34);
+//        scalarArray.Put(3, 34, 35, 36);
+
+        /*long aLongx = scalarArray.getLong(0);
         long aLong = scalarArray.getLong(1);
         long aLong1 = scalarArray.getLong(2);
         long aLong2 = scalarArray.getLong(3);
@@ -29,8 +29,13 @@ static boolean a = true;
         System.out.println(aLong1);
         System.out.println(aLong2);
         System.out.println(aLong3);
-        System.out.println(aLong4);
-        scalarArray.Del();
+        System.out.println(aLong4);*/
+//        ScalarArray a2 = scalarArray.Dup2Safe();
+//        a2.Put(129);
+//        scalarArray.showAll();
+//        a2.showAll();
+//        scalarArray.Del();
+//        a2.Del();
         VkUtils2.extracted();
 
 
@@ -83,6 +88,9 @@ static boolean a = true;
 
 //                glfwWaitEventsTimeout(1);
                 System.out.println(renderer2.Renderer2.frps);
+//                System.out.println(Runtime.getRuntime().maxMemory());
+//                System.out.println(Runtime.getRuntime().totalMemory());
+//                System.out.println(Runtime.getRuntime().freeMemory());
 //                System.out.println(VkUtils2.Renderer.i);
 //                System.out.println(VkUtils2.Renderer.FenceStat);
                 renderer2.Renderer2.frps = 0;

@@ -1,6 +1,7 @@
 package vkutils;
 
 import org.jetbrains.annotations.NotNull;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.Checks;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.Pointer;
@@ -8,6 +9,7 @@ import org.lwjgl.system.Struct;
 import org.lwjgl.system.jemalloc.JEmalloc;
 import org.lwjgl.vulkan.*;
 
+import javax.naming.OperationNotSupportedException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -25,10 +27,11 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     //    protected static final VkAllocationCallbacks pAllocator = null;
     //int m = JEmalloc.je_mallctl()
     private static final long[] pDummyPlacementPointerAlloc = {0};
-    private static long frame=0;
+    private static long sizeOf;
+    private static long frame;
     static long stacks;
     static final HashMap<Long, Long> tracker = new HashMap<>();
-    static final long size = 1023;
+    static final long size = 0x1FF;
     static final long address = JEmalloc.nje_mallocx(size, JEmalloc.MALLOCX_ARENA(2))+VkMemoryRequirements.SIZEOF;//nmemAllocChecked(Pointer.POINTER_SIZE);
 
     public static long mallocM(long num, long size)
@@ -109,6 +112,8 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 
         }
         System.out.println("AllocatingM: " + size + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
+        System.out.println("Allocated Size: " + sizeof(l));
+
         stacks += size;
         tracker.put(l, size);
         return l;//memAddress0(LibCStdlib.malloc(size));
@@ -116,8 +121,12 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     }//Exploit Java freeing;/Dealloctaing/freeing/removing from Heap obejsts intilaised in fuctions nor returned as an arument.paraamter.object to aovid teh need to explcitly free/rrset the Frame.pffset.Indicies/rlatvieoptiianing/mpelemnst/ocucurneces.//occupations/Ranges/wodtsh./offsets/Psootions/atcual Adresses/initialistaions/Atcua;istaions tracked alloctaions
     public static long malloc2(long size)
     {
-//        JEmalloc.nje_sdallocx();
+        if(size+address>MemSysm.size+address)
+        {
+            throw new UnsupportedOperationException("No Enough Memory: "+ Thread.currentThread().getStackTrace()[2]);
+        }
         System.out.println(JEmalloc.nje_malloc_usable_size(address));
+//        JEmalloc.nje_sdallocx();
         frame += size;
         return address+frame;
         /*final long l = JEmalloc.nje_malloc(1);
@@ -141,7 +150,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     public static long mallocLongPtr(long descriptorSets)
     {
         System.out.println("AllocatingL: "+descriptorSets+" Total Allocations : "+stacks+"  "+Thread.currentThread().getStackTrace()[2]);
-        long s = JEmalloc.nje_malloc(1);
+        long s = JEmalloc.nje_malloc(sizeof(descriptorSets));
         tracker.put(s, descriptorSets);
         stacks+=8;
         System.out.println("Allocated: "+s);
@@ -153,7 +162,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     public static long mallocLongPtr(Pointer commandBuffer)
     {
         System.out.println("AllocatingL: "+commandBuffer+"Addr: "+commandBuffer.address()+" Total Allocations : "+stacks);
-        long s = JEmalloc.nje_malloc(8);
+        long s = JEmalloc.nje_malloc(sizeof(commandBuffer.address()));
         tracker.put(s, commandBuffer.address());
         stacks+=8;
         memPutLong(s, commandBuffer.address());
@@ -238,7 +247,15 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 
     public static long sizeof(long address)
     {
-        return JEmalloc.nje_sallocx(address, 0);
+        final long l = JEmalloc.nje_sallocx(address, 0);
+        return l;
+    }
+
+    public static void setFrame(int i)
+    {
+        JEmalloc.nje_free(address);
+        JEmalloc.nje_dallocx(address,0);
+        frame=i;
     }
 
     public long nmalloc(int a)
@@ -257,14 +274,43 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 //        return nmemCallocChecked(1, 8);
     }
 
-    static final class Memsys2 {
+    public IntBuffer ints(int... graphicsFamily)
+    {
+        final IntBuffer put = memByteBuffer(address + (frame), graphicsFamily.length * 4).asIntBuffer().put(graphicsFamily).flip();
+        frame+=put.capacity();
+        if(!put.isDirect())
+        {
+            throw new RuntimeException("Not Direct");
+        }
+        return put;
 
-        private static final LongBuffer removed = memLongBuffer(address+64L, 64);
+    }
+    public static LongBuffer longs(long... graphicsFamily)
+    {
+        final LongBuffer put = memByteBuffer(address + (frame), graphicsFamily.length * 8).asLongBuffer().put(graphicsFamily).flip();
+        frame+=put.capacity();
+        if(!put.isDirect())
+        {
+            throw new RuntimeException("Not Direct");
+        }
+        return put;
+    }
+
+     static final class Memsys2 {
+
+        private static final PointerBuffer removed = memPointerBuffer(address+0x7FF, 0x3f);
 
         static void doPointerAllocSafe2(Pointer allocateInfo, long vkCreateBuffer, long[] a)
         {
             //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
             free(allocateInfo);
+            System.out.println("Attempting to Call: ->" + allocateInfo);
+            Checks.check(allocateInfo.address());
+            checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, a, vkCreateBuffer));
+        }static void doPointerAllocSafe22(Pointer allocateInfo, long vkCreateBuffer, long[] a)
+        {
+            //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
+//            free(allocateInfo);
             System.out.println("Attempting to Call: ->" + allocateInfo);
             Checks.check(allocateInfo.address());
             checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, a, vkCreateBuffer));
@@ -372,6 +418,11 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             }
             return false;
         }
+
+         public static void free(IntBuffer ints)
+         {
+             JEmalloc.je_free(ints);
+         }
 
        /* @Override
         public boolean equals(Object obj)

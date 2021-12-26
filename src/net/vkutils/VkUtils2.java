@@ -7,6 +7,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.*;
+import org.lwjgl.system.jemalloc.JEmalloc;
 import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
@@ -21,7 +22,6 @@ import static java.util.stream.Collectors.toSet;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
 import static org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions;
-import static org.lwjgl.system.JNI.callPJPPPI;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.vulkan.EXTDebugUtils.*;
 import static org.lwjgl.vulkan.KHRSurface.*;
@@ -123,9 +123,9 @@ public final class VkUtils2 {
 
         {
             //todo:fix Intbuffer being inlined eincirertcly and malloc one Int.value eachat eahc method call/usage incorrectly, cauisng validtaion layerst be broken/which in tandme iwth teh 443.41 dirver bug where valditaion layers do nto function corertcly untill full farembuffer/Piplelinebuffer>Framebuffer is implemneted and others e.g. etc i.e.
-            final IntBuffer ints = MemSys.stack().ints(0);
+            final IntBuffer ints = MemSys.ints(0);
             vkEnumerateInstanceLayerProperties(ints, null);
-            VkLayerProperties.Buffer availableLayers = VkLayerProperties.malloc(ints.get(0), MemSys.stack());
+            VkLayerProperties.Buffer availableLayers = VkLayerProperties.create(MemSysm.address, ints.get(0));
             vkEnumerateInstanceLayerProperties(ints, availableLayers);
             Set<String> availableLayerNames = availableLayers.stream()
                     .map(VkLayerProperties::layerNameString)
@@ -133,6 +133,7 @@ public final class VkUtils2 {
             for (int i = 0; i < availableLayerNames.size(); i++) {
                 System.out.println(Arrays.toString(availableLayerNames.iterator().next().getBytes(StandardCharsets.UTF_8)));
             }
+            MemSysm.Memsys2.free(ints);
 
 
             return availableLayerNames.containsAll(VALIDATION_LAYERS);
@@ -147,11 +148,11 @@ public final class VkUtils2 {
             System.out.println(MemSys.stack());
             throw new RuntimeException("Validation requested but not supported");
         }
-        IntBuffer a = MemSys.stack().ints(EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
+        IntBuffer a = MemSys.ints(EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
         VkValidationFeaturesEXT extValidationFeatures = VkValidationFeaturesEXT.create(MemSysm.calloc(1, VkValidationFeaturesEXT.SIZEOF)).sType$Default()
                 .pEnabledValidationFeatures(a);
 
-        VkApplicationInfo vkApplInfo = VkApplicationInfo.create(MemSysm.malloc(VkApplicationInfo.SIZEOF)).sType$Default()
+        VkApplicationInfo vkApplInfo = VkApplicationInfo.create(MemSysm.malloc2(VkApplicationInfo.SIZEOF)).sType$Default()
                 //memSet(vkApplInfo, 0,VkApplicationInfo.SIZEOF);
                 .sType(VK_STRUCTURE_TYPE_APPLICATION_INFO)
                 .pApplicationName(MemSys.stack().UTF8Safe(" "))
@@ -160,11 +161,12 @@ public final class VkUtils2 {
                 .engineVersion(VK_MAKE_VERSION(1, 0, 0))
                 .apiVersion(VK12.VK_API_VERSION_1_2);
 
-
+        MemSysm.Memsys2.free(a);
+        MemSysm.Memsys2.free(vkApplInfo);
         //nmemFree(vkApplInfo);
 
 
-        VkInstanceCreateInfo InstCreateInfo = VkInstanceCreateInfo.create(MemSysm.malloc(VkInstanceCreateInfo.SIZEOF)).sType$Default();
+        VkInstanceCreateInfo InstCreateInfo = VkInstanceCreateInfo.create(MemSysm.malloc2(VkInstanceCreateInfo.SIZEOF)).sType$Default();
 //                InstCreateInfo.sType(VK10.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
         memPutLong(InstCreateInfo.address() + VkInstanceCreateInfo.PAPPLICATIONINFO, vkApplInfo.address());
         glfwExtensions = getRequiredExtensions();
@@ -189,7 +191,7 @@ public final class VkUtils2 {
         }
 //            else InstCreateInfo.pNext(NULL);
 
-        PointerBuffer instancePtr = memPointerBuffer(MemSys.stack().nmalloc(Pointer.POINTER_SIZE, 1 << Pointer.POINTER_SHIFT), 1);
+        PointerBuffer instancePtr = memPointerBuffer(MemSysm.address, 1);
         vkCreateInstance(InstCreateInfo, MemSys.pAllocator(), instancePtr);
 
 
@@ -247,11 +249,12 @@ public final class VkUtils2 {
     }
 
     static boolean checkDeviceExtensionSupport(VkPhysicalDevice device) {
-        IntBuffer extensionCount = MemSys.stack().ints(0);
-        vkEnumerateDeviceExtensionProperties(device, (String)null, extensionCount, null);
-        VkExtensionProperties.Buffer availableExtensions= VkExtensionProperties.malloc(extensionCount.get(0), MemSys.stack());
-        vkEnumerateDeviceExtensionProperties(device, (String)null, extensionCount, availableExtensions);
-
+        IntBuffer extensionCount = MemSys.ints(0);
+        nvkEnumerateDeviceExtensionProperties(device, NULL, memAddress0(extensionCount), NULL);
+        VkExtensionProperties.Buffer availableExtensions= VkExtensionProperties.create(MemSysm.malloc(VkExtensionProperties.SIZEOF*extensionCount.get(0)), extensionCount.get(0));
+        nvkEnumerateDeviceExtensionProperties(device, NULL, memAddress0(extensionCount), availableExtensions.address0());
+        MemSysm.Memsys2.free(availableExtensions);
+        MemSysm.Memsys2.free(extensionCount);
         return availableExtensions.stream()
                 .map(VkExtensionProperties::extensionNameString)
                 .collect(toSet())
@@ -331,6 +334,7 @@ public final class VkUtils2 {
 
     static void extracted()
     {
+        {
         createInstance();
         setupDebugMessenger();
         createSurface();
@@ -355,23 +359,28 @@ public final class VkUtils2 {
         renderer2.UniformBufferObject.createDescriptorPool();
         renderer2.UniformBufferObject.createDescriptorSets();
         renderer2.Buffers.createCommandBuffers();
+    }
         MemSys.stack().pop();
+
+        MemSysm.setFrame(0);
+        System.out.println("Real Alloc: "+JEmalloc.nje_sallocx(MemSysm.address,0));
+
     }
 
 
     static final class SwapChainSupportDetails
     {
 
-        static final long[]  swapChainFramebuffers = new long[3];
-        static final long[] swapChainImages = new long[3];
-        static final long[] swapChainImageViews = new long[3];
+        static final long[] swapChainFramebuffers =  {0,0,0};//memAddress0(MemSys.ints(0,0,0));
+        static final long[] swapChainImages = {0,0,0};
+        static final long[] swapChainImageViews = {0,0,0};
         static final long[] renderPass= {0};
         private static int swapChainImageFormat;
         static VkExtent2D swapChainExtent;
         private static final VkSurfaceCapabilitiesKHR   capabilities = VkSurfaceCapabilitiesKHR.malloc(MemSys.stack());
         private static  VkSurfaceFormatKHR.Buffer formats;
         private static IntBuffer presentModes;
-        static long[] swapChain={0};
+        static final long[] swapChain={0};
 //        static boolean depthBuffer = true;
         //            swapChainImageViews = new ArrayList<>(swapChainImages.length);
 
@@ -471,26 +480,26 @@ public final class VkUtils2 {
                 attachments = MemSys.stack().longs(swapChainImageFormat, renderer2.Buffers.depthImageView[0]);
 //               else
 //                   attachments = stack.stack().longs(1);
-                VkFramebufferAttachmentImageInfo.Buffer  AttachmentImageInfo = VkFramebufferAttachmentImageInfo .create(MemSysm.calloc(VkFramebufferAttachmentImageInfo .SIZEOF),2);
+                VkFramebufferAttachmentImageInfo.Buffer  AttachmentImageInfo = VkFramebufferAttachmentImageInfo .create(MemSysm.malloc(VkFramebufferAttachmentImageInfo .SIZEOF),2);
                 AttachmentImageInfo.get(0).sType$Default()
                         .layerCount(1)
                         .width(swapChainExtent.width())
                         .height(swapChainExtent.height())
                         .usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
-                        .pViewFormats(MemSys.stack().ints(VK_FORMAT_R8G8B8A8_SRGB));
+                        .pViewFormats(MemSys.ints(VK_FORMAT_R8G8B8A8_SRGB));
                 AttachmentImageInfo.get(1).sType$Default()
                         .layerCount(1)
                         .width(swapChainExtent.width())
                         .height(swapChainExtent.height())
                         .usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-                        .pViewFormats(MemSys.stack().ints(Texture.findDepthFormat()));
+                        .pViewFormats(MemSys.ints(Texture.findDepthFormat()));
 
                 VkFramebufferAttachmentsCreateInfo vkFramebufferAttachmentsCreateInfo = VkFramebufferAttachmentsCreateInfo.create(MemSysm.malloc(VkFramebufferAttachmentsCreateInfo.SIZEOF)).sType$Default()
                         .pAttachmentImageInfos(AttachmentImageInfo);
 
                 // Lets allocate the create info struct once and just update the pAttachments field each iteration
                 //VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.createSafe(MemSysm.malloc(1, VkFramebufferCreateInfo.SIZEOF)).sType$Default()
-                VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.create(MemSysm.calloc(1, VkFramebufferCreateInfo.SIZEOF)).sType$Default()
+                VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.create(MemSysm.malloc(VkFramebufferCreateInfo.SIZEOF)).sType$Default()
 //                       .sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
                         .renderPass(renderPass[0])
                         .width(swapChainExtent.width())
@@ -554,13 +563,13 @@ public final class VkUtils2 {
                 if(!(Objects.equals(Queues.graphicsFamily, Queues.presentFamily))) {
                     //VkSwapchainCreateInfoKHR.imageSharingMode(VK_SHARING_MODE_CONCURRENT);
                     createInfo.imageSharingMode(VK_SHARING_MODE_EXCLUSIVE);
-                    createInfo.pQueueFamilyIndices(MemSys.stack().ints(Queues.graphicsFamily, Queues.presentFamily));
+                    createInfo.pQueueFamilyIndices(MemSys.ints(Queues.graphicsFamily, Queues.presentFamily));
                 } else {
                     createInfo.imageSharingMode(VK_SHARING_MODE_EXCLUSIVE);
                 }
 
                 createInfo.preTransform(capabilities.currentTransform())
-                        .compositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
+                        .compositeAlpha(VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
                         .presentMode(presentMode)
                         .clipped(true)
 
@@ -1127,9 +1136,15 @@ public final class VkUtils2 {
 
 
         //long[] queueFamilyCount = MemSysm.calloc(1);// stack.stack().ints(0);
-        private static final PointerBuffer queueFamilyCount=memPointerBuffer(MemSysm.address, 1).put(VK_NULL_HANDLE);
+        private static final PointerBuffer queueFamilyCount;
         private static Integer transferFamily;
         private static int qi;
+
+        static
+        {
+           memPutLong(MemSysm.address, VK_NULL_HANDLE);
+            queueFamilyCount= memPointerBuffer(MemSysm.address, 1);//.put(VK_NULL_HANDLE);
+        }
 
        /* static void findQueueFamilies(VkPhysicalDevice device) {
 
@@ -1176,9 +1191,11 @@ public final class VkUtils2 {
 
                 IntBuffer presentSupport = MemSys.stack().ints(VK_FALSE);
                 System.out.println(qi);
-                System.out.println(queueFamilies.get(0).queueCount());
-                System.out.println(queueFamilies.get(1).queueCount());
-                System.out.println(queueFamilies.get(2).queueCount());
+
+                    for (VkQueueFamilyProperties a : queueFamilies) {
+                        System.out.println(a.queueCount());
+                    }
+
                 int i = 0;
                 while (i <queueFamilyCount.limit() /*&& !isComplete()*/) {
 

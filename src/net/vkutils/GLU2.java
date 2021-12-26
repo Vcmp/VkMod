@@ -1,6 +1,5 @@
 package vkutils;
 
-import org.joml.Matrix4f;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
@@ -92,21 +91,11 @@ public static final class theUnSafe
         }*/
         public static long getPointer(Object obj, long offset) {
             return theUnSafe.UNSAFE.getLong(obj, offset);
-        }public static long getPointer(long offset) {
-            return theUnSafe.UNSAFE.getLong(null, offset);
         }
 
         public static void memcpy(long srcAddress, long dstAddress, long Bytes)
         {
             theUnSafe.UNSAFE.copyMemory(srcAddress, dstAddress, Bytes);
-        }
-        public static void memcpy(Object o, long srcAddress, Object o2, long dstAddress, long Bytes)
-        {
-            theUnSafe.UNSAFE.copyMemory(o, srcAddress, null, dstAddress, Bytes);
-        }
-        public static long alloc(long a)
-        {
-            return theUnSafe.UNSAFE.allocateMemory(a);
         }
 
         //todo: Might be posible to use X Orientation as the xasis argmnt as a varyin Axis
@@ -259,7 +248,7 @@ public static final class theUnSafe
         }
 
 
-        public static void memcpy2(short[] vertices, long handle, long l)
+        public static void memcpy2(short[] vertices, long handle, int l)
         {
             theUnSafe.UNSAFE.copyMemory(vertices, 16, null, handle, l);
         }
