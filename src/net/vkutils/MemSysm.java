@@ -31,9 +31,12 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     private static long frame;
     static long stacks;
     static final HashMap<Long, Long> tracker = new HashMap<>();
-    static final long size = 0x1FF;
-    static final long address = JEmalloc.nje_mallocx(size, JEmalloc.MALLOCX_ARENA(2))+VkMemoryRequirements.SIZEOF;//nmemAllocChecked(Pointer.POINTER_SIZE);
-
+    static final long size = 16L;//0x1FF;
+    static final long address = JEmalloc.nje_malloc(16L);//+VkMemoryRequirements.SIZEOF;//nmemAllocChecked(Pointer.POINTER_SIZE);
+        static
+        {
+            JEmalloc.nje_posix_memalign(address, 64, sizeof(address));
+        }
     public static long mallocM(long num, long size)
     {
         System.err.println(VkMemoryRequirements.SIZEOF);
@@ -123,12 +126,15 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     {
         if(size+address>MemSysm.size+address)
         {
-            throw new UnsupportedOperationException("No Enough Memory: "+ Thread.currentThread().getStackTrace()[2]);
+//            throw new UnsupportedOperationException("No Enough Memory: "+ Thread.currentThread().getStackTrace()[2]);
         }
-        System.out.println(JEmalloc.nje_malloc_usable_size(address));
 //        JEmalloc.nje_sdallocx();
+
+        getOffset();
         frame += size;
-        return address+frame;
+        final long l = address + frame;
+        System.out.println("AlloctaionMalloc2: "+l+"--->"+Thread.currentThread().getStackTrace()[2]);
+        return l;
         /*final long l = JEmalloc.nje_malloc(1);
         if(tracker.getOrDefault(l, 0L)==size)
         {
@@ -145,6 +151,25 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         tracker.put(l, size);
         return l;//memAddress0(LibCStdlib.malloc(size));*/
 //        return LibCStdlib.nmalloc(Integer.toUnsignedLong(size));//memAddress0(LibCStdlib.malloc(size));
+    }
+
+    private static void getOffset()
+    {
+        System.out.println(JEmalloc.nje_malloc_usable_size(address+frame)+"-->"+frame);
+    }
+
+    public static long malloc3(long size)
+    {
+        if(size+address>MemSysm.size+address)
+        {
+//            throw new UnsupportedOperationException("No Enough Memory: "+ Thread.currentThread().getStackTrace()[2]);
+        }
+        getOffset();
+        //        JEmalloc.nje_sdallocx();
+        frame += size;
+        final long l = address + (frame - size);
+        System.out.println("AlloctaionMalloc3: "+l+"--->"+Thread.currentThread().getStackTrace()[2]);
+        return l;
     }
 
     public static long mallocLongPtr(long descriptorSets)
@@ -256,6 +281,13 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         JEmalloc.nje_free(address);
         JEmalloc.nje_dallocx(address,0);
         frame=i;
+    }
+
+    public static long malloc0()
+    {
+        System.out.println(JEmalloc.nje_malloc_usable_size(address));
+//        JEmalloc.nje_sdallocx();
+        return address+frame;
     }
 
     public long nmalloc(int a)
@@ -422,6 +454,16 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
          public static void free(IntBuffer ints)
          {
              JEmalloc.je_free(ints);
+         }
+
+         public static void decFrm(long a)
+         {
+//             JEmalloc.nje_free(a);
+             frame-=sizeof(a);
+         }public static void decFrm(Pointer a)
+         {
+             JEmalloc.nje_free(a.address());
+             frame-=sizeof(a.address());
          }
 
        /* @Override
