@@ -46,7 +46,7 @@ public final class VkUtils2 {
     //    KEY(1)
     static final long monitor=0;
     static PointerBuffer glfwExtensions;
-    static final boolean ENABLE_VALIDATION_LAYERS = false;
+    static final boolean ENABLE_VALIDATION_LAYERS = true;
     static final Set<String> VALIDATION_LAYERS;
     static final boolean debug = false;
 
@@ -123,9 +123,9 @@ public final class VkUtils2 {
 
         {
             //todo:fix Intbuffer being inlined eincirertcly and malloc one Int.value eachat eahc method call/usage incorrectly, cauisng validtaion layerst be broken/which in tandme iwth teh 443.41 dirver bug where valditaion layers do nto function corertcly untill full farembuffer/Piplelinebuffer>Framebuffer is implemneted and others e.g. etc i.e.
-            final IntBuffer ints = MemSys.ints(0);
+            final IntBuffer ints = MemSysm.ints(0);
             vkEnumerateInstanceLayerProperties(ints, null);
-            VkLayerProperties.Buffer availableLayers = VkLayerProperties.create(MemSysm.address, ints.get(0));
+            VkLayerProperties.Buffer availableLayers = VkLayerProperties.create(MemSysm.malloc(VkLayerProperties.SIZEOF*ints.get(0)), ints.get(0));
             vkEnumerateInstanceLayerProperties(ints, availableLayers);
             Set<String> availableLayerNames = availableLayers.stream()
                     .map(VkLayerProperties::layerNameString)
@@ -148,7 +148,7 @@ public final class VkUtils2 {
             System.out.println(MemSys.stack());
             throw new RuntimeException("Validation requested but not supported");
         }
-        IntBuffer a = MemSys.ints(EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
+        IntBuffer a = MemSysm.ints(EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT, EXTValidationFeatures.VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
         VkValidationFeaturesEXT extValidationFeatures = VkValidationFeaturesEXT.create(MemSysm.calloc(VkValidationFeaturesEXT.SIZEOF)).sType$Default()
                 .pEnabledValidationFeatures(a);
 
@@ -161,7 +161,7 @@ public final class VkUtils2 {
                 .engineVersion(VK_MAKE_VERSION(1, 0, 0))
                 .apiVersion(VK12.VK_API_VERSION_1_2);
 
-        MemSysm.Memsys2.free(a);
+//        MemSysm.Memsys2.free(a);
         MemSysm.Memsys2.free(vkApplInfo);
         //nmemFree(vkApplInfo);
 
@@ -223,7 +223,7 @@ public final class VkUtils2 {
             return;
         }
 
-        VkDebugUtilsMessengerCreateInfoEXT createInfo = VkDebugUtilsMessengerCreateInfoEXT.create(MemSysm.malloc0()).sType$Default();
+        VkDebugUtilsMessengerCreateInfoEXT createInfo = VkDebugUtilsMessengerCreateInfoEXT.create(MemSysm.malloc3(VkDebugUtilsMessengerCreateInfoEXT.SIZEOF)).sType$Default();
 //        createInfo.sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
         createInfo.messageSeverity(VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT);
         createInfo.messageType(VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT);
@@ -249,7 +249,7 @@ public final class VkUtils2 {
     }
 
     static boolean checkDeviceExtensionSupport(VkPhysicalDevice device) {
-        IntBuffer extensionCount = MemSys.ints(0);
+        IntBuffer extensionCount = MemSysm.ints(0);
         nvkEnumerateDeviceExtensionProperties(device, NULL, memAddress0(extensionCount), NULL);
         VkExtensionProperties.Buffer availableExtensions= VkExtensionProperties.create(MemSysm.malloc(VkExtensionProperties.SIZEOF*extensionCount.get(0)), extensionCount.get(0));
         nvkEnumerateDeviceExtensionProperties(device, NULL, memAddress0(extensionCount), availableExtensions.address0());
@@ -282,7 +282,7 @@ public final class VkUtils2 {
         System.out.println("Picking Physical Device");
 
 
-        IntBuffer deviceCount = MemSys.ints(1);
+        IntBuffer deviceCount = MemSysm.ints(1);
         vkEnumeratePhysicalDevices(vkInstance, deviceCount, null);
         if(deviceCount.get(0) == 0) throw new RuntimeException("Failed to find GPUs with Vulkan support");
         int size = deviceCount.get(0);
@@ -478,29 +478,29 @@ public final class VkUtils2 {
 
                 LongBuffer attachments;
 //               if(depthBuffer)
-                attachments = MemSys.stack().longs(swapChainImageFormat, renderer2.Buffers.depthImageView[0]);
+                attachments = MemSysm.longs(swapChainImageFormat, renderer2.Buffers.depthImageView[0]);
 //               else
 //                   attachments = stack.stack().longs(1);
-                VkFramebufferAttachmentImageInfo.Buffer  AttachmentImageInfo = VkFramebufferAttachmentImageInfo .create(MemSysm.malloc(VkFramebufferAttachmentImageInfo .SIZEOF),2);
+                VkFramebufferAttachmentImageInfo.Buffer  AttachmentImageInfo = VkFramebufferAttachmentImageInfo .create(MemSysm.malloc3(VkFramebufferAttachmentImageInfo .SIZEOF*2L),2);
                 AttachmentImageInfo.get(0).sType$Default()
                         .layerCount(1)
                         .width(swapChainExtent.width())
                         .height(swapChainExtent.height())
-                        .usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
-                        .pViewFormats(MemSys.ints(VK_FORMAT_R8G8B8A8_SRGB));
+                        .usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+                        memPutLong(Texture.membarrier, VK_FORMAT_R8G8B8A8_SRGB);
                 AttachmentImageInfo.get(1).sType$Default()
                         .layerCount(1)
                         .width(swapChainExtent.width())
                         .height(swapChainExtent.height())
-                        .usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-                        .pViewFormats(MemSys.ints(Texture.findDepthFormat()));
+                        .usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+                memPutLong(Texture.membarrier, Texture.findDepthFormat());
 
-                VkFramebufferAttachmentsCreateInfo vkFramebufferAttachmentsCreateInfo = VkFramebufferAttachmentsCreateInfo.create(MemSysm.malloc(VkFramebufferAttachmentsCreateInfo.SIZEOF)).sType$Default()
+                VkFramebufferAttachmentsCreateInfo vkFramebufferAttachmentsCreateInfo = VkFramebufferAttachmentsCreateInfo.create(MemSysm.malloc3(VkFramebufferAttachmentsCreateInfo.SIZEOF)).sType$Default()
                         .pAttachmentImageInfos(AttachmentImageInfo);
 
                 // Lets allocate the create info struct once and just update the pAttachments field each iteration
                 //VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.createSafe(MemSysm.malloc(1, VkFramebufferCreateInfo.SIZEOF)).sType$Default()
-                VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.create(MemSysm.malloc(VkFramebufferCreateInfo.SIZEOF)).sType$Default()
+                VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.create(MemSysm.malloc3(VkFramebufferCreateInfo.SIZEOF)).sType$Default()
 //                       .sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
                         .renderPass(renderPass[0])
                         .width(swapChainExtent.width())
@@ -564,7 +564,7 @@ public final class VkUtils2 {
                 if(!(Objects.equals(Queues.graphicsFamily, Queues.presentFamily))) {
                     //VkSwapchainCreateInfoKHR.imageSharingMode(VK_SHARING_MODE_CONCURRENT);
                     createInfo.imageSharingMode(VK_SHARING_MODE_EXCLUSIVE);
-                    createInfo.pQueueFamilyIndices(MemSys.ints(Queues.graphicsFamily, Queues.presentFamily));
+                    createInfo.pQueueFamilyIndices(MemSysm.ints(Queues.graphicsFamily, Queues.presentFamily));
                 } else {
                     createInfo.imageSharingMode(VK_SHARING_MODE_EXCLUSIVE);
                 }
@@ -1139,7 +1139,6 @@ public final class VkUtils2 {
         //long[] queueFamilyCount = MemSysm.calloc(1);// stack.stack().ints(0);
         private static final PointerBuffer queueFamilyCount;
         private static Integer transferFamily;
-        private static int qi;
 
         static
         {
@@ -1180,6 +1179,8 @@ public final class VkUtils2 {
          * Update: Was actual found to be due to a culling issue where the Framerate varies based on which Position or angle the vertex Buffer/VBO is viewed from, which due to the poorly optimised Intilaistaion/placemtn of verticies are only visib;e from certain diretcions, hense/causing.deriving the Framerate Differnce/Fluctuation/Inconsistency
          * This issue should be easily fixbale with a properr implemtaion of a Index Buffer with vertex DeDuplication the reduent
          */
+
+        //This Method also has alignment problems hence why some graphical Distortions and Artifacts occur in some instances
         private static void enumerateDetermineQueueFamilies(VkPhysicalDevice device) {
 
             {
@@ -1190,8 +1191,7 @@ public final class VkUtils2 {
 
                 nvkGetPhysicalDeviceQueueFamilyProperties(device, queueFamilyCount.address0(), queueFamilies.address0());
 
-                IntBuffer presentSupport = MemSys.stack().ints(VK_FALSE);
-                System.out.println(qi);
+                IntBuffer presentSupport = MemSysm.ints(VK_FALSE);
 
                     for (VkQueueFamilyProperties a : queueFamilies) {
                         System.out.println(a.queueCount());
@@ -1220,6 +1220,8 @@ public final class VkUtils2 {
     }
 
     private static final class Texture {
+        private static long membarrier;
+
         private static void createTextureImage() {
             final String a = (Paths.get("").toAbsolutePath() +("/shaders/terrain.png"));
             System.out.println(a);
@@ -1308,7 +1310,7 @@ public final class VkUtils2 {
                     .levelCount(1)
                     .baseArrayLayer(0)
                     .layerCount(1);
-
+            membarrier=barrier.address0();
             if(newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
 
 
@@ -1460,7 +1462,7 @@ public final class VkUtils2 {
         private static int findDepthFormat()
         {
             return findSupportedFormat(
-                    MemSys.stack().ints(VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT)
+                    MemSysm.ints(VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT)
             );
         }
 
@@ -1489,7 +1491,7 @@ public final class VkUtils2 {
         }
 
         private static void createImageView(long @NotNull [] i, int swapChainImageFormat, int vkImageAspect, long[] a) {
-            VkImageViewCreateInfo createInfo = VkImageViewCreateInfo.create(MemSysm.calloc(VkImageViewCreateInfo.SIZEOF)).sType$Default()
+            VkImageViewCreateInfo createInfo = VkImageViewCreateInfo.create(MemSysm.malloc3(VkImageViewCreateInfo.SIZEOF)).sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
                     .image(i[0])
                     .viewType(VK_IMAGE_VIEW_TYPE_2D)

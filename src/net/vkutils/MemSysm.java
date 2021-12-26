@@ -35,7 +35,11 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     static final long address = JEmalloc.nje_malloc(16L);//+VkMemoryRequirements.SIZEOF;//nmemAllocChecked(Pointer.POINTER_SIZE);
         static
         {
+            System.out.println("BAse Address: "+address);
             JEmalloc.nje_posix_memalign(address, 64, sizeof(address));
+            JEmalloc.nje_dallocx(address, JEmalloc.MALLOCX_ARENA(2));
+            System.out.println("BAse Address: "+address);
+
         }
     public static long mallocM(long num, long size)
     {
@@ -248,7 +252,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     }
     static long doPointerAllocSafe(@NotNull Pointer allocateInfo, long vkCreateBuffer) {
         //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator(), pVertexBufferMemory);
-        //Memsys2.free(allocateInfo);
+        Memsys2.free(allocateInfo);
         System.out.println("Attempting to CallS: ->"+allocateInfo+"-->"+Thread.currentThread().getStackTrace()[2]);
         Checks.check(allocateInfo.address());
         Memsys2.checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, pDummyPlacementPointerAlloc, vkCreateBuffer));
@@ -306,7 +310,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 //        return nmemCallocChecked(1, 8);
     }
 
-    public IntBuffer ints(int... graphicsFamily)
+    public static IntBuffer ints(int... graphicsFamily)
     {
         final IntBuffer put = memByteBuffer(address + (frame), graphicsFamily.length * 4).asIntBuffer().put(graphicsFamily).flip();
         frame+=put.capacity();
@@ -314,6 +318,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         {
             throw new RuntimeException("Not Direct");
         }
+        System.out.println("ByteBuf: "+memAddress0(put)+"+"+frame);
         return put;
 
     }
@@ -325,12 +330,13 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         {
             throw new RuntimeException("Not Direct");
         }
+        System.out.println("ByteBuf: "+memAddress0(put)+"+"+frame);
         return put;
     }
 
      static final class Memsys2 {
 
-        private static final PointerBuffer removed = memPointerBuffer(address+0x7FF, 0x3f);
+        private static final PointerBuffer removed = memPointerBuffer(address+0x7FF, 128);
 
         static void doPointerAllocSafe2(Pointer allocateInfo, long vkCreateBuffer, long[] a)
         {
@@ -392,6 +398,8 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             JEmalloc.nje_free(ptr);
             tracker.remove(ptr);
             removed.put(ptr);
+            JEmalloc.nje_dallocx(ptr, JEmalloc.MALLCTL_ARENAS_DESTROYED);
+
         }
 
         public static void free8(long ptr)
@@ -408,6 +416,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             MemSysm.stacks -= 8;
             removed.put(ptr);
             JEmalloc.nje_free(ptr);
+
         }
 
         public static void free(ByteBuffer ptr)
@@ -419,6 +428,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
                 throw new UnsupportedOperationException("Warn: Don't Need to free!: " + ptr + "" + memAddress0(ptr));
             }
             JEmalloc.je_free(ptr);
+            JEmalloc.je_sdallocx(ptr, 0);
         }
 
         static VkCommandBuffer doPointerAllocAlt(long allocateInfo, long vkAllocateCommandBuffers) {

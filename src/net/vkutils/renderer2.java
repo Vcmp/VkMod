@@ -209,6 +209,7 @@ final class renderer2 {
 
                     System.out.println(MemSysm.tracker);
                     System.out.println(MemSysm.sizeof(address2));
+                    System.out.println("Descriptor Attachment: "+aa);
 
                 }
 
