@@ -2,8 +2,8 @@ package vkutils;
 
 public class vkPushConstant
 {
-    long a;
-    float[] matxv;
+    final long a;
+    final float[] matxv;
 
     vkPushConstant(long x, float[] ax)
     {

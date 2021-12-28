@@ -56,7 +56,7 @@ static final class invocationcallbacks {
     private static GLFWFramebufferSizeCallback sizeCallback;
 
     private static final GLFWCursorPosCallback cursorFallback;
-    private static GLFWFramebufferSizeCallback framebuffer;
+    private static final GLFWFramebufferSizeCallback framebuffer;
     private static final GLFWMouseButtonCallback mouseButtonCallBack;
     private static final GLFWKeyCallback keyCallBack;
     private static final GLFWScrollCallback scrollCallback;
@@ -113,7 +113,7 @@ static final class invocationcallbacks {
 
             System.out.println("ReSize");
 //            GL11.glViewport(0,0,i,i1);
-            framebuffer.set(window);
+//            framebuffer.set(window);
             glfwSetWindowMonitor(window, monitor, 0, 0, i, i1, -1);
 
         }));

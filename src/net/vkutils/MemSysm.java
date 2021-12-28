@@ -9,7 +9,6 @@ import org.lwjgl.system.Struct;
 import org.lwjgl.system.jemalloc.JEmalloc;
 import org.lwjgl.vulkan.*;
 
-import javax.naming.OperationNotSupportedException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -21,12 +20,14 @@ import static org.lwjgl.vulkan.VK10.*;
 import static vkutils.VkUtils2.Queues.device;
 
 
-final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*implements MemoryAllocator*/ {
+final record MemSysm() /*implements MemoryAllocator*/ {
 
     //    protected static final VkAllocationCallbacks pAllocator = null;
-    //int m = JEmalloc.je_mallctl()
+    //int m = JEmalloc.je_mallctl(),
+    static final MemoryStack stack = MemoryStack.stackPush();
+    static final VkAllocationCallbacks pAllocator = null;
     private static final long[] pDummyPlacementPointerAlloc = {0};
-    private static long sizeOf;
+//    private static long sizeOf;
     private static long frame;
     static long stacks;
     static final HashMap<Long, Long> tracker = new HashMap<>();
@@ -55,11 +56,11 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             System.err.println("WARN:C: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
         }
-        if(Memsys2.contains(l))
+       /* if(Memsys2.contains(l))
         {
             System.err.println("WARN:C: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
 
-        }
+        }*/
         System.out.println("AllocatingC: " + size + " With Capacity: " + 1 + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
         stacks += size;
         tracker.put(l, size);
@@ -74,11 +75,11 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             System.err.println("WARN:C: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
         }
-        if(Memsys2.contains(l))
+       /* if(Memsys2.contains(l))
         {
             System.err.println("WARN:C: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
 
-        }
+        }*/
         System.out.println("AllocatingC: " + size + " With Capacity: " + num + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
         stacks += size;
         tracker.put(l, size);
@@ -112,11 +113,11 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             System.err.println("WARN:M: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
         }
-        if(Memsys2.contains(l))
+       /* if(Memsys2.contains(l))
         {
             System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
 
-        }
+        }*/
         System.out.println("AllocatingM: " + size + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
         System.out.println("Allocated Size: " + sizeof(l));
 
@@ -163,15 +164,28 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 
     public static long malloc3(long size)
     {
-        if(size+address>MemSysm.size+address)
+        /*if(size+address>MemSysm.size+address)
         {
 //            throw new UnsupportedOperationException("No Enough Memory: "+ Thread.currentThread().getStackTrace()[2]);
-        }
+        }*/
         getOffset();
         //        JEmalloc.nje_sdallocx();
+        //size+=size%2;
         frame += size;
-        final long l = address + (frame - size);
+         long l = address + (frame - size);
+        l = alignAs(l);
         System.out.println("AlloctaionMalloc3: "+l+"--->"+Thread.currentThread().getStackTrace()[2]);
+        return l;
+    }
+
+    private static long alignAs(long l)
+    {
+        final long l1 = l % Pointer.POINTER_SIZE;
+        if(l1 !=0)
+        {
+            System.err.println("Mem Alloctaion not Aligned!"+ l+ "Aligning As: --->"+(l-l1));
+            l -= l1;
+        }
         return l;
     }
 
@@ -204,12 +218,6 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         stacks+=8;
         memPutLong(s, commandBuffer.address());
         return s;
-    }
-
-    static void doPointerAllocSafeExtrm2(long imageInfo, long vkCreateImage, long[] a)
-    {
-//        Memsys2.free8(imageInfo);
-        Memsys2.checkCall(callPPPPI(device.address(), imageInfo, NULL, a, vkCreateImage));
     }
 
     //todo: modfied form of getHandle specificaly Deisgned to handle Dierct access to UniformBuffer Modifictaion with Alternative CommandBuffer Execution, All memory Address Loctaions smust be aligned to 512 exactly to avoid Rendering Artifacts./nstablity
@@ -261,7 +269,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     static long doPointerAlloc5L(Pointer device, Pointer pipelineInfo)
     {
         Checks.check(pipelineInfo.address());
-        Memsys2.checkCall(callPJPPPI(device.address(), VK10.VK_NULL_HANDLE, 1, pipelineInfo.address(), NULL, pDummyPlacementPointerAlloc, renderer2.Buffers.capabilities.vkCreateGraphicsPipelines));
+        Memsys2.checkCall(callPJPPPI(device.address(), VK_NULL_HANDLE, 1, pipelineInfo.address(), NULL, pDummyPlacementPointerAlloc, renderer2.Buffers.capabilities.vkCreateGraphicsPipelines));
         return pDummyPlacementPointerAlloc[0];
     }
 
@@ -335,7 +343,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 
      static final class Memsys2 {
 
-        private static final PointerBuffer removed = memPointerBuffer(address+0x7FF, 96);
+//        private static final PointerBuffer removed = memPointerBuffer(address+0x7FF, 96);
 
         static void doPointerAllocSafe2(Pointer allocateInfo, long vkCreateBuffer, long[] a)
         {
@@ -377,7 +385,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             MemSysm.stacks -= stacks;
             JEmalloc.nje_free(ptr.address());
             tracker.remove(ptr.address());
-            removed.put(ptr.address());
+//            removed.put(ptr.address());
         }
 
         public static void free(long ptr)
@@ -395,7 +403,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             MemSysm.stacks -= stacks;
             JEmalloc.nje_free(ptr);
             tracker.remove(ptr);
-            removed.put(ptr);
+//            removed.put(ptr);
             JEmalloc.nje_dallocx(ptr, JEmalloc.MALLCTL_ARENAS_DESTROYED);
 
         }
@@ -412,7 +420,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             }
             System.out.println("FreeingL: " + ptr + "Size: " + stacks + "Current allocations: " + MemSysm.stacks + "-->" + Thread.currentThread().getStackTrace()[2]);
             MemSysm.stacks -= 8;
-            removed.put(ptr);
+//            removed.put(ptr);
             JEmalloc.nje_free(ptr);
 
         }
@@ -448,7 +456,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             }
         }
 
-        private static boolean contains(long l)
+        /*private static boolean contains(long l)
         {
             //removed.rewind();
             for (int i = 0; i< removed.limit(); i++)
@@ -457,7 +465,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
                     return true;
             }
             return false;
-        }
+        }*/
 
          public static void free(IntBuffer ints)
          {
@@ -472,6 +480,12 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
          {
              JEmalloc.nje_free(a.address());
              frame-=sizeof(a.address());
+         }
+
+         static void doPointerAllocSafeExtrm2(long imageInfo, long vkCreateImage, long[] a)
+         {
+     //        Memsys2.free8(imageInfo);
+             checkCall(callPPPPI(device.address(), imageInfo, NULL, a, vkCreateImage));
          }
 
        /* @Override
