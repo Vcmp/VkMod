@@ -46,7 +46,7 @@ public final class VkUtils2 {
     //    KEY(1)
     static final long monitor=0;
     static PointerBuffer glfwExtensions;
-    static final boolean ENABLE_VALIDATION_LAYERS = true;
+    static final boolean ENABLE_VALIDATION_LAYERS = false;
     static final Set<String> VALIDATION_LAYERS;
     static final boolean debug = false;
 
@@ -87,7 +87,7 @@ public final class VkUtils2 {
         glfwWindowHint(GLFW_CONTEXT_RELEASE_BEHAVIOR , GLFW_RELEASE_BEHAVIOR_NONE);
 
 
-        window = glfwCreateWindow(854, 480, " ", monitor, 0);
+        window = glfwCreateWindow(854, 480, "VKMod", monitor, 0);
 
 
         if(window == NULL) throw new RuntimeException("Cannot create window");
@@ -155,7 +155,7 @@ public final class VkUtils2 {
         VkApplicationInfo vkApplInfo = VkApplicationInfo.create(MemSysm.malloc3(VkApplicationInfo.SIZEOF)).sType$Default()
                 //memSet(vkApplInfo, 0,VkApplicationInfo.SIZEOF);
                 .sType(VK_STRUCTURE_TYPE_APPLICATION_INFO)
-                .pApplicationName(MemSys.stack().UTF8Safe(" "))
+                .pApplicationName(MemSys.stack().UTF8Safe("VKMod"))
                 .applicationVersion(VK_MAKE_VERSION(1, 0, 0))
                 .pEngineName(MemSys.stack().UTF8Safe("No Engine"))
                 .engineVersion(VK_MAKE_VERSION(1, 0, 0))
@@ -478,37 +478,37 @@ public final class VkUtils2 {
 
                 LongBuffer attachments;
 //               if(depthBuffer)
-                attachments = MemSysm.longs(swapChainImageFormat, renderer2.Buffers.depthImageView[0]);
+                attachments = MemSys.stack().longs(swapChainImageFormat, renderer2.Buffers.depthImageView[0]);
 //               else
 //                   attachments = stack.stack().longs(1);
-                VkFramebufferAttachmentImageInfo.Buffer  AttachmentImageInfo = VkFramebufferAttachmentImageInfo .create(MemSysm.malloc3(VkFramebufferAttachmentImageInfo .SIZEOF*2L),2);
+                VkFramebufferAttachmentImageInfo.Buffer  AttachmentImageInfo = VkFramebufferAttachmentImageInfo .create(MemSysm.calloc(VkFramebufferAttachmentImageInfo .SIZEOF*2L),2);
                 AttachmentImageInfo.get(0).sType$Default()
                         .layerCount(1)
                         .width(swapChainExtent.width())
                         .height(swapChainExtent.height())
-                        .usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-                        memPutLong(Texture.membarrier, VK_FORMAT_R8G8B8A8_SRGB);
+                        .usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
+                        .pViewFormats(MemSysm.ints(VK_FORMAT_R8G8B8A8_SRGB));
                 AttachmentImageInfo.get(1).sType$Default()
                         .layerCount(1)
                         .width(swapChainExtent.width())
                         .height(swapChainExtent.height())
-                        .usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
-                memPutLong(Texture.membarrier, Texture.findDepthFormat());
+                        .usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+                        .pViewFormats(MemSysm.ints(Texture.findDepthFormat()));
 
-                VkFramebufferAttachmentsCreateInfo vkFramebufferAttachmentsCreateInfo = VkFramebufferAttachmentsCreateInfo.create(MemSysm.malloc3(VkFramebufferAttachmentsCreateInfo.SIZEOF)).sType$Default()
+                VkFramebufferAttachmentsCreateInfo vkFramebufferAttachmentsCreateInfo = VkFramebufferAttachmentsCreateInfo.create(MemSysm.calloc(VkFramebufferAttachmentsCreateInfo.SIZEOF)).sType$Default()
                         .pAttachmentImageInfos(AttachmentImageInfo);
 
                 // Lets allocate the create info struct once and just update the pAttachments field each iteration
                 //VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.createSafe(MemSysm.malloc(1, VkFramebufferCreateInfo.SIZEOF)).sType$Default()
-                VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.create(MemSysm.malloc3(VkFramebufferCreateInfo.SIZEOF)).sType$Default()
-//                       .sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
+                VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.create(MemSysm.calloc(VkFramebufferCreateInfo.SIZEOF)).sType$Default()
+//                      .sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
                         .renderPass(renderPass[0])
                         .width(swapChainExtent.width())
                         .height(swapChainExtent.height())
                         .layers(1)
                         .pAttachments(attachments)
 //                       .flags(VK12.VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT)
-                        .pNext(vkFramebufferAttachmentsCreateInfo)
+//                        .pNext(vkFramebufferAttachmentsCreateInfo)
                         .attachmentCount(attachments.capacity());
 
                 //todo: Check only oneusbpass runing due to differing ColourDpetHFormats and isn;t coauong probelsm sude to Sumuetnous ComandBuffering nort requiinG fencing.Allowing for FenceSkip
@@ -570,7 +570,7 @@ public final class VkUtils2 {
                 }
 
                 createInfo.preTransform(capabilities.currentTransform())
-                        .compositeAlpha(VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
+                        .compositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
                         .presentMode(presentMode)
                         .clipped(true)
 
@@ -718,12 +718,12 @@ public final class VkUtils2 {
                     .pName(entryPoint);
 
 
-            VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo1 = VkPipelineVertexInputStateCreateInfo.calloc().sType$Default()
+            VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = VkPipelineVertexInputStateCreateInfo.calloc().sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
                     .pVertexBindingDescriptions(getVertexInputBindingDescription());
             //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
-            memPutAddress(vkPipelineVertexInputStateCreateInfo1.address() + VkPipelineVertexInputStateCreateInfo.PVERTEXATTRIBUTEDESCRIPTIONS, (getAttributeDescriptions()));
-            VkPipelineVertexInputStateCreateInfo.nvertexAttributeDescriptionCount(vkPipelineVertexInputStateCreateInfo1.address(), 3);
+            memPutAddress(vkPipelineVertexInputStateCreateInfo.address() + VkPipelineVertexInputStateCreateInfo.PVERTEXATTRIBUTEDESCRIPTIONS, (getAttributeDescriptions()));
+            VkPipelineVertexInputStateCreateInfo.nvertexAttributeDescriptionCount(vkPipelineVertexInputStateCreateInfo.address(), 3);
             //            memPutLong(vkPipelineVertexInputStateCreateInfo.address() + VkPipelineVertexInputStateCreateInfo.PVERTEXATTRIBUTEDESCRIPTIONS, getAttributeDescriptions());
             //VkPipelineVertexInputStateCreateInfo.nvertexAttributeDescriptionCount(vkPipelineVertexInputStateCreateInfo.address(), 3);
             VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc().sType$Default()
@@ -825,7 +825,7 @@ public final class VkUtils2 {
             VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.create(MemSysm.malloc(VkGraphicsPipelineCreateInfo.SIZEOF),1).sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO)
                     .pStages(shaderStages)
-                    .pVertexInputState(vkPipelineVertexInputStateCreateInfo1)
+                    .pVertexInputState(vkPipelineVertexInputStateCreateInfo)
                     .pInputAssemblyState(inputAssembly)
                     .pViewportState(vkViewPortState)
                     .pRasterizationState(VkPipeLineRasterization)
@@ -841,7 +841,7 @@ public final class VkUtils2 {
             memFree(shaderStages);
             nmemFree(colorBlending.address());
             //memFree(pipelineInfo);
-            nmemFree(vkPipelineVertexInputStateCreateInfo1.address());
+            nmemFree(vkPipelineVertexInputStateCreateInfo.address());
             nmemFree(inputAssembly.address());
 
             nmemFree(vkViewPortState.address());
@@ -890,7 +890,7 @@ public final class VkUtils2 {
                     .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
                     .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
             //TODO: WARn Possible FAIL!
-            VkSubpassDescription vkSubpassDescriptions = VkSubpassDescription.create(MemSysm.malloc(VkSubpassDescription.SIZEOF))
+            VkSubpassDescription.Buffer vkSubpassDescriptions = VkSubpassDescription.create(MemSysm.malloc(VkSubpassDescription.SIZEOF),1)
                     .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
                     .colorAttachmentCount(1)
                     .pColorAttachments(attachmentsRefs);
@@ -914,18 +914,16 @@ public final class VkUtils2 {
             VkSubpassDependency dependency = VkSubpassDependency.create(MemSysm.malloc(MemSysm.sizeof(depthAttachment.address())))
                     .srcSubpass(abs)
                     .dstSubpass(0)
-                    .srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-                    .srcAccessMask(0)
-                    .dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-                    .dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+                    .srcStageMask(VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT)
+                    .srcAccessMask(VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
+                    .dstStageMask(VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT)
+                    .dstAccessMask(VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
+                    .dependencyFlags(VK_DEPENDENCY_BY_REGION_BIT);
 
 
-            VkRenderPassCreateInfo vkRenderPassCreateInfo1 = VkRenderPassCreateInfo.create(MemSysm.calloc(VkRenderPassCreateInfo.SIZEOF)).sType$Default();
-//                    .sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
-            memPutAddress(vkRenderPassCreateInfo1.address() + VkRenderPassCreateInfo.PATTACHMENTS, attachments.address0());
-            VkRenderPassCreateInfo.nattachmentCount(vkRenderPassCreateInfo1.address(), capacity);
-            memPutLong(vkRenderPassCreateInfo1.address() + VkRenderPassCreateInfo.PSUBPASSES, vkSubpassDescriptions.address());
-            VkRenderPassCreateInfo.nsubpassCount(vkRenderPassCreateInfo1.address(), 1);
+            VkRenderPassCreateInfo vkRenderPassCreateInfo1 = VkRenderPassCreateInfo.create(MemSysm.calloc(VkRenderPassCreateInfo.SIZEOF)).sType$Default()
+            .pAttachments(attachments)
+                    .pSubpasses(vkSubpassDescriptions);
             memPutLong(vkRenderPassCreateInfo1.address() + VkRenderPassCreateInfo.PDEPENDENCIES, dependency.address());
             memPutInt(vkRenderPassCreateInfo1.address() + VkRenderPassCreateInfo.DEPENDENCYCOUNT, 1);
 
@@ -940,7 +938,7 @@ public final class VkUtils2 {
         private static void createCommandPool() {
 //            Queues.findQueueFamilies(Queues.physicalDevice);
 
-            VkCommandPoolCreateInfo poolInfo = VkCommandPoolCreateInfo.create(MemSysm.malloc3(VkCommandPoolCreateInfo.SIZEOF)).sType$Default()
+            VkCommandPoolCreateInfo poolInfo = VkCommandPoolCreateInfo.create(MemSysm.calloc(VkCommandPoolCreateInfo.SIZEOF)).sType$Default()
                     .queueFamilyIndex(Queues.graphicsFamily)
                     .flags(0);
             //Memsys2.free(poolInfo);
@@ -1083,10 +1081,10 @@ public final class VkUtils2 {
         {
 
             nvkGetDeviceQueue(device, Queues.graphicsFamily, 0,MemSysm.address);
-            Queues.graphicsQueue = new VkQueue(Queues.queueFamilyCount.get(0), device);
+            Queues.graphicsQueue = new VkQueue(memGetLong(MemSysm.address), device);
 
             nvkGetDeviceQueue(device, Queues.presentFamily, 0,MemSysm.address);
-            Queues.presentQueue = new VkQueue(Queues.queueFamilyCount.get(0), device);
+            Queues.presentQueue = new VkQueue(memGetLong(MemSysm.address), device);
 
 //            nvkGetDeviceQueue(device, Queues.transferFamily, 0, MemSysm.address);
 //            Queues.transferQueue= new VkQueue(pQueue.get(0), device);
@@ -1137,13 +1135,13 @@ public final class VkUtils2 {
 
 
         //long[] queueFamilyCount = MemSysm.calloc(1);// stack.stack().ints(0);
-        private static final PointerBuffer queueFamilyCount;
+//        private static final PointerBuffer queueFamilyCount;
         private static Integer transferFamily;
 
         static
         {
-           memPutLong(MemSysm.address, VK_NULL_HANDLE);
-            queueFamilyCount= memPointerBuffer(MemSysm.address, 1);//.put(VK_NULL_HANDLE);
+           //memPutLong(MemSysm.address, VK_NULL_HANDLE);
+//            queueFamilyCount= memPointerBuffer(MemSysm.address, 1).put(VK_NULL_HANDLE);
         }
 
        /* static void findQueueFamilies(VkPhysicalDevice device) {
@@ -1184,32 +1182,41 @@ public final class VkUtils2 {
         private static void enumerateDetermineQueueFamilies(VkPhysicalDevice device) {
 
             {
-                nvkGetPhysicalDeviceQueueFamilyProperties(device, queueFamilyCount.address0(), 0);
+                nvkGetPhysicalDeviceQueueFamilyProperties(device, MemSysm.address, 0);
 //                qi=(GLU2.theUnSafe.UNSAFE.getInt(MemSysm.address+4, 0));
 
-                VkQueueFamilyProperties.Buffer queueFamilies = VkQueueFamilyProperties.create(MemSysm.address, memGetInt(queueFamilyCount.address0()));
+                VkQueueFamilyProperties.Buffer queueFamilies = VkQueueFamilyProperties.create(MemSysm.address, memGetInt(MemSysm.address));
 
-                nvkGetPhysicalDeviceQueueFamilyProperties(device, queueFamilyCount.address0(), queueFamilies.address0());
+                nvkGetPhysicalDeviceQueueFamilyProperties(device, MemSysm.address, queueFamilies.address0());
 
                 IntBuffer presentSupport = MemSysm.ints(VK_FALSE);
-
+                int i = 0;
                     for (VkQueueFamilyProperties a : queueFamilies) {
                         System.out.println(a.queueCount());
+                        if((a.queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {
+                            graphicsFamily = i;
+                        }
+                        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface[0], presentSupport);
+
+                        if(/*(a.queueFlags() & VK_QUEUE_GRAPHICS_BIT) == 0 && */presentSupport.get(0) == VK_TRUE) {
+                            presentFamily = 0;
+                        }
+                        i++;
                     }
 
-                int i = 0;
-                while (i <queueFamilyCount.limit() /*&& !isComplete()*/) {
+//
+//                while (i <queueFamilyCount.limit() /*&& !isComplete()*/) {
 
-                    if((queueFamilies.queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) {
+                   /* if((queueFamilies.get(0).queueFlags() & VK_QUEUE_TRANSFER_BIT) != 0) {
                         graphicsFamily = i;
                     }
                     vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface[0], presentSupport);
 
-                    if(presentSupport.get(0) == VK_TRUE) {
+                    if((queueFamilies.get(2).queueFlags() & VK_QUEUE_GRAPHICS_BIT) == 0) {
                         presentFamily = i;
                     }
-                    i++;
-                }
+                    i++;*/
+
                 System.out.println(a+++"Graphics Family: "+graphicsFamily+" Present family: "+presentFamily);
 //                MemSysm.Memsys2.free(queueFamilies);
                 //vkutils.MemSysm.Memsys2.free(queueFamilyCount);
@@ -1261,7 +1268,7 @@ public final class VkUtils2 {
 
 
             //            beginSingleTimeCommands();
-            transitionImageLayout(renderer2.Buffers.vkImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+//            transitionImageLayout(renderer2.Buffers.vkImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
             copyBufferToImage(stagingBufferImg, renderer2.Buffers.vkImage, pWidth[0], pHeight[0]);
             transitionImageLayout(renderer2.Buffers.vkImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -1297,7 +1304,7 @@ public final class VkUtils2 {
         static void transitionImageLayout(long @NotNull [] image, int format, int oldLayout, int newLayout) {
             VkCommandBuffer commandBuffer = renderer2.Buffers.beginSingleTimeCommands();
 
-            VkImageMemoryBarrier.Buffer barrier = VkImageMemoryBarrier.create(MemSysm.malloc0(), 1).sType$Default()
+            VkImageMemoryBarrier.Buffer barrier = VkImageMemoryBarrier.create(MemSysm.calloc(VkImageMemoryBarrier.SIZEOF), 1).sType$Default()
                     //                    .sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER)
                     .oldLayout(oldLayout)
                     .newLayout(newLayout)
@@ -1310,7 +1317,7 @@ public final class VkUtils2 {
                     .levelCount(1)
                     .baseArrayLayer(0)
                     .layerCount(1);
-            membarrier=barrier.address0();
+//            membarrier=barrier.address0();
             if(newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
 
 
@@ -1324,24 +1331,24 @@ public final class VkUtils2 {
             final int sourceStage;
             final int destinationStage;
             switch (oldLayout) {
-                case VK_IMAGE_LAYOUT_UNDEFINED -> barrier.srcAccessMask(0);
+                case VK_IMAGE_LAYOUT_UNDEFINED -> barrier.srcAccessMask(KHRSynchronization2.VK_ACCESS_NONE_KHR);
                 case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL -> barrier.srcAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
                 default -> throw new IllegalArgumentException("Unsupported layout transition");
             }
             switch (newLayout) {
-                case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL -> {
+                /*case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL -> {
                     barrier.dstAccessMask(VK_ACCESS_TRANSFER_WRITE_BIT);
                     sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                     destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
                     barrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
 
-                }
+                }*/
                 case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL -> {
                     barrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT);
 
                     barrier.dstAccessMask(VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
                     sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-                    destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+                    destinationStage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
                 }
                 case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL -> {
                     barrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
@@ -1366,7 +1373,7 @@ public final class VkUtils2 {
         }
 
         private static void createImage(int width, int height, int format, int usage, long[] pTextureImage, long[] pTextureImageMemory) {
-            VkImageCreateInfo imageInfo = VkImageCreateInfo.create(MemSysm.malloc0())
+            VkImageCreateInfo imageInfo = VkImageCreateInfo.create(MemSysm.malloc(VkImageCreateInfo.SIZEOF))
                     .sType(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
                     .imageType(VK_IMAGE_TYPE_2D);
             imageInfo.extent().width(width)
@@ -1491,7 +1498,7 @@ public final class VkUtils2 {
         }
 
         private static void createImageView(long @NotNull [] i, int swapChainImageFormat, int vkImageAspect, long[] a) {
-            VkImageViewCreateInfo createInfo = VkImageViewCreateInfo.create(MemSysm.malloc3(VkImageViewCreateInfo.SIZEOF)).sType$Default()
+            VkImageViewCreateInfo createInfo = VkImageViewCreateInfo.create(MemSysm.calloc(VkImageViewCreateInfo.SIZEOF)).sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
                     .image(i[0])
                     .viewType(VK_IMAGE_VIEW_TYPE_2D)

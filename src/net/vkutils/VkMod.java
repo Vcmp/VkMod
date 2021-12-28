@@ -3,9 +3,10 @@ package vkutils;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.JNI.invokePI;
+import static org.lwjgl.system.JNI.invokeV;
 
 public final class VkMod {
-static boolean a = true;
+private static boolean a = true;
 //    private static boolean aa;
 
     public static void main(String[] args)
@@ -38,9 +39,8 @@ static boolean a = true;
 //        a2.Del();
         VkUtils2.extracted();
 
-
 //            int i = 0;
-        new Thread(VkMod::run).start();
+         new Thread(VkMod::run).start();
 //        new Thread(VkMod::run2).start();
         while (invokePI(VkUtils2.window, Functions.WindowShouldClose) == 0)
         {
@@ -50,8 +50,7 @@ static boolean a = true;
             renderer2.Renderer2.drawFrame();
             }
 //aa=true;
-            glfwPollEvents();
-
+            invokeV(Functions.PollEvents);
 
 
         }
@@ -74,10 +73,11 @@ static boolean a = true;
     {
         long l = System.currentTimeMillis();
 //            renderer2.UniformBufferObject.updateUniformBuffer(0);
+        cursorPos.invocationcallbacks.isActive();;//glfwPollEvents();
         while (a) {
 
 //        renderer2.Renderer2.drawFrame(0);
-            //glfwWaitEventsTimeout(1);
+            glfwWaitEventsTimeout(1);
 
 //            renderer2.UniformBufferObject.updateUniformBuffer(renderer2.Renderer2.currentFrame);
             //aa=true;
@@ -94,7 +94,7 @@ static boolean a = true;
 //                System.out.println(VkUtils2.Renderer.i);
 //                System.out.println(VkUtils2.Renderer.FenceStat);
                 renderer2.Renderer2.frps = 0;
-                renderer2.Renderer2.i = 0;
+//                renderer2.Renderer2.i = 0;
 //                VkUtils2.Renderer.FenceStat=0;
                 l += 1000L;
             }

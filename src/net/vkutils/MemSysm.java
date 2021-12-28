@@ -17,8 +17,7 @@ import java.util.*;
 
 import static org.lwjgl.system.JNI.*;
 import static org.lwjgl.system.MemoryUtil.*;
-import static org.lwjgl.vulkan.VK10.VK_NOT_READY;
-import static org.lwjgl.vulkan.VK10.VK_TIMEOUT;
+import static org.lwjgl.vulkan.VK10.*;
 import static vkutils.VkUtils2.Queues.device;
 
 
@@ -32,7 +31,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
     static long stacks;
     static final HashMap<Long, Long> tracker = new HashMap<>();
     static final long size = 16L;//0x1FF;
-    static final long address = JEmalloc.nje_malloc(16L);//+VkMemoryRequirements.SIZEOF;//nmemAllocChecked(Pointer.POINTER_SIZE);
+    static final long address = JEmalloc.nje_malloc(size);//+VkMemoryRequirements.SIZEOF;//nmemAllocChecked(Pointer.POINTER_SIZE);
         static
         {
             System.out.println("BAse Address: "+address);
@@ -336,15 +335,14 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
 
      static final class Memsys2 {
 
-        private static final PointerBuffer removed = memPointerBuffer(address+0x7FF, 128);
+        private static final PointerBuffer removed = memPointerBuffer(address+0x7FF, 96);
 
         static void doPointerAllocSafe2(Pointer allocateInfo, long vkCreateBuffer, long[] a)
         {
             //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
             free(allocateInfo);
             System.out.println("Attempting to Call: ->" + allocateInfo);
-            Checks.check(allocateInfo.address());
-            checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, a, vkCreateBuffer));
+            checkCall(callPPPPI(device.address(), Checks.check(allocateInfo.address()), NULL, a, vkCreateBuffer));
         }static void doPointerAllocSafe22(Pointer allocateInfo, long vkCreateBuffer, long[] a)
         {
             //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
@@ -407,7 +405,7 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
             final long orDefault = tracker.getOrDefault(ptr, 0L);
             final long stacks = memGetLong(ptr);
             if (orDefault == 0) {
-                throw new UnsupportedOperationException("Warn: Don't Need to free!: " + ptr);
+//                throw new UnsupportedOperationException("Warn: Don't Need to free!: " + ptr);
             }
             if (stacks == 0) {
                 System.err.println("WARN: Is not Allocated Object!");
@@ -443,10 +441,10 @@ final record MemSysm(MemoryStack stack, VkAllocationCallbacks pAllocator) /*impl
         {
             switch (callPPPPI)
             {
+                case VK_SUCCESS -> System.out.println("OK!");
                 case VK_NOT_READY -> throw new RuntimeException("Not ready!");
                 case VK_TIMEOUT -> throw new RuntimeException("Bad TimeOut!");
-                default -> {
-                }
+                default -> throw new RuntimeException("Unknown Error!");
             }
         }
 

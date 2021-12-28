@@ -99,7 +99,7 @@ final class renderer2 {
 
     static final class Renderer2 {
         //        private static final int[] imagesInFlight = new int[MAX_FRAMES_IN_FLIGHT];
-        static final long[] AvailableSemaphore = {0};
+        private static final long[] AvailableSemaphore = {0};
         //        private static final long[] vkFenceA;
         //        static final long[] vkFence = {0};
         private static final int MAX_FRAMES_IN_FLIGHT = 3;
@@ -140,11 +140,13 @@ final class renderer2 {
 
         private static final long VkPresentInfoKHR1 = MemSysm.malloc(VkPresentInfoKHR.SIZEOF);
         public static long frps;
-        static int i;
+//        static int i;
         //static int FenceStat;
-        static int currentFrame;
+        private static int currentFrame;
         private final static long aa = memGetLong(MemSysm.address)+0x200;
 
+
+        private static final long value = MemSysm.address + MemSysm.size;
 
         static {
             {
@@ -154,7 +156,7 @@ final class renderer2 {
                 /* for(int i = 0;i < MAX_FRAMES_IN_FLIGHT;i++)*/
                 {
 //                    long vkSemaphoreCreateInfo = doAbsCalloc2(VkSemaphoreCreateInfo.SIZEOF,VkSemaphoreCreateInfo.ALIGNOF)-4L;
-                    long vkSemaphoreCreateInfo = VkUtils2.MemSys.ncalloc(VkSemaphoreCreateInfo.SIZEOF);
+                    long vkSemaphoreCreateInfo = MemSysm.malloc3(VkSemaphoreCreateInfo.SIZEOF);
                     VkSemaphoreCreateInfo.nsType(vkSemaphoreCreateInfo, VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
                     MemSysm.doPointerAllocSafeExtrm2(vkSemaphoreCreateInfo, device.getCapabilities().vkCreateSemaphore, AvailableSemaphore);
                     MemSysm.doPointerAllocSafeExtrm2(vkSemaphoreCreateInfo, device.getCapabilities().vkCreateSemaphore, FinishedSemaphore);
@@ -177,27 +179,27 @@ final class renderer2 {
 //                    pFences = memAddress0(longs2);
                     // Align address to the specified alignment
 //                    long address = (stack.stack().getAddress() + stack.stack().getPointer() - 8) & -8L;
-                    address2 = MemSysm.malloc(VkSubmitInfo.SIZEOF)+ VkSubmitInfo.STYPE;//(ncalloc());
+                    address2 = MemSysm.malloc3(VkSubmitInfo.SIZEOF);//+ VkSubmitInfo.STYPE;//(ncalloc());
                     VkSubmitInfo.nsType(address2, VK_STRUCTURE_TYPE_SUBMIT_INFO);
                     VkSubmitInfo.nwaitSemaphoreCount(address2, 1);
                     VkSubmitInfo.npNext(address2, NULL);
 
 //                    stack2.setPointer((stack2.getPointer() - 8));
 
-                    memPutLong(address2 + VkSubmitInfo.PWAITSEMAPHORES, MemSysm.mallocLongPtr((AvailableSemaphore[0])));
-                    memPutLong(address2 + VkSubmitInfo.PWAITDSTSTAGEMASK, memAddress0((VkUtils2.MemSys.ints(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT))));
-                    memPutLong(address2 + VkSubmitInfo.PSIGNALSEMAPHORES, GLU2.theUnSafe.UNSAFE.getLong(FinishedSemaphore, 8));
-                    MemSysm.Memsys2.decFrm(address2);
+                    memPutLong(address2 + VkSubmitInfo.PWAITSEMAPHORES, VkUtils2.MemSys.stack().pointers((AvailableSemaphore[0])).address0());
+                    memPutLong(address2 + VkSubmitInfo.PWAITDSTSTAGEMASK, memAddress((MemSysm.ints(VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT))));
+                    memPutLong(address2 + VkSubmitInfo.PSIGNALSEMAPHORES, VkUtils2.MemSys.stack().pointers((FinishedSemaphore[0])).address0());
+//                    MemSysm.Memsys2.decFrm(address2);
 
 
                     //memSet(VkPresentInfoKHR1, 0, VkPresentInfoKHR.SIZEOF);
                     VkPresentInfoKHR.nsType(VkPresentInfoKHR1, VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
                     memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PWAITSEMAPHORES, (AvailableSemaphore[0]));
                     memPutInt(VkPresentInfoKHR1 + VkPresentInfoKHR.SWAPCHAINCOUNT, 1);
-                    memPutLong(address2 + VkSubmitInfo.PCOMMANDBUFFERS, ((MemSysm.address + MemSysm.size)));
+                    memPutLong(address2 + VkSubmitInfo.PCOMMANDBUFFERS, value);
                     VkSubmitInfo.ncommandBufferCount(address2, 1);
                     memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PIMAGEINDICES, MemSysm.address);
-                    memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PSWAPCHAINS, MemSysm.mallocLongPtr(VkUtils2.SwapChainSupportDetails.swapChain[0]));
+                    memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PSWAPCHAINS, VkUtils2.MemSys.stack().pointers(VkUtils2.SwapChainSupportDetails.swapChain[0]).address0());
                     //nmemFree(VkPresentInfoKHR1);
 //                    VkPresentInfoKHR.nsType(VkPresentInfoKHR1, VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
 //                    memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PWAITSEMAPHORES, (AvailableSemaphore));
@@ -205,7 +207,7 @@ final class renderer2 {
                     // Align address to the specified alignment
                     VkSubmitInfo.validate(address2);
                     VkPresentInfoKHR.validate(VkPresentInfoKHR1);
-                    MemSysm.Memsys2.decFrm(VkPresentInfoKHR1); //Not alloctaed witH Contgous-Non_frag Malloc alloctaion, propb shouldn;t be here
+//                    MemSysm.Memsys2.decFrm(VkPresentInfoKHR1); //Not alloctaed witH Contgous-Non_frag Malloc alloctaion, propb shouldn;t be here
 
                     System.out.println(MemSysm.tracker);
                     System.out.println(MemSysm.sizeof(address2));
@@ -256,7 +258,7 @@ final class renderer2 {
                 {
                     return;
                 }*/
-                i += nvkAcquireNextImageKHR(device, VkUtils2.SwapChainSupportDetails.swapChain[0], TmUt, AvailableSemaphore[0], VK_NULL_HANDLE, MemSysm.address);
+                nvkAcquireNextImageKHR(device, VkUtils2.SwapChainSupportDetails.swapChain[0], TmUt, AvailableSemaphore[0], VK_NULL_HANDLE, MemSysm.address);
 
 
                 renderer2.UniformBufferObject.updateUniformBuffer();
@@ -276,16 +278,16 @@ final class renderer2 {
 //                    vkWaitForFences(Queues.device, vkFence, false, TmUt);
 
 
-                memPutLong((MemSysm.address + MemSysm.size), Buffers.commandBuffers[currentFrame].address());
+                memPutLong(value, Buffers.commandBuffers[currentFrame].address());
 
-                i += nvkQueueSubmit(graphicsQueue, 1, address2, VK_NULL_HANDLE);
+                nvkQueueSubmit(graphicsQueue, 1, address2, VK_NULL_HANDLE);
 
 //                i += VK10.vkWaitForFences(device, vkFence, false, TmUt); //Don;t know why a Waiti sneeded here: lil;ey for Vailable/Finished Sempahore as Queue present needs both fences and Semphors to all be Synchronised prior to SHowing teh Farmebuffer/Swa[Chain
 //                    FenceStat += vkGetFenceStatus(device, vkFence[0]); //For some reson callinf fence Status seem to help prevebt exeution erros/valdiatiomne rrors the  reserting Siad fences at the begging of the next DrawLoopCall?iteration/CallLoop/Invokation FrameAquisition e.g. e.g.
                 memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PWAITSEMAPHORES, (AvailableSemaphore[0]));
 
 
-                i += nvkQueuePresentKHR(presentQueue, VkPresentInfoKHR1);
+                nvkQueuePresentKHR(presentQueue, VkPresentInfoKHR1);
 //                   i+= vkResetFences(Queues.device, vkFenceA);
 
 
@@ -313,7 +315,7 @@ final class renderer2 {
         static final long[] vkAllocMemory = {0};
         static final long[] vkImage ={0};
         static final long[] depthImageView ={0};
-        private static final LongBuffer offsets = VkUtils2.MemSys.longs(0);
+        private static final LongBuffer offsets = MemSysm.longs(0);
         //        private static final int VERT_SIZE= (OFFSET_POS + OFFSETOF_COLOR + OFFSETOF_TEXTCOORDS) / Float.BYTES;
         static final int VERTICESSTRIDE = 32;//vertices.length*6/indices.length;
         static final VKCapabilitiesDevice capabilities;
@@ -479,7 +481,7 @@ final class renderer2 {
             {
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 //                    nvkCmdBindVertexBuffers(commandBuffer, 0, 1, (put), memAddress0(offsets));
-                vkCmdBindVertexBuffers(commandBuffer, 0, VkUtils2.MemSys.longs(vertexBuffer), offsets);
+                vkCmdBindVertexBuffers(commandBuffer, 0, MemSysm.longs(vertexBuffer), offsets);
                 vkCmdBindIndexBuffer(commandBuffer, indexBuffer[0], 0, VK_INDEX_TYPE_UINT16);
                 /*double angle = (glfwGetTime()* UniformBufferObject.aFloat);
 
@@ -494,7 +496,7 @@ final class renderer2 {
 
             vkCmdPushConstants(commandBuffer, vkLayout[0], VK_SHADER_STAGE_VERTEX_BIT, 0, (UniformBufferObject.proj2));*/
                 UniformBufferObject.mvp.getToAddress(memGetLong(MemSysm.address)+0x200);
-                long pointerBuffer = MemSysm.mallocLongPtr(UniformBufferObject.descriptorSets[0]);
+                long pointerBuffer = VkUtils2.MemSys.stack().pointers((UniformBufferObject.descriptorSets[0])).address0();
 
                 // Convert to long to support addressing up to 2^31-1 elements, regardless of sizeof(element).
                 // The unsigned conversion helps the JIT produce code that is as fast as if int was returned.
@@ -646,7 +648,7 @@ final class renderer2 {
 
         static @NotNull VkCommandBuffer beginSingleTimeCommands() {
 
-            final long allocateInfo = MemSysm.malloc0();
+            final long allocateInfo = MemSysm.calloc(VkCommandBufferAllocateInfo.SIZEOF);
             VkCommandBufferAllocateInfo.nsType(allocateInfo, VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
             VkCommandBufferAllocateInfo.nlevel(allocateInfo, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
             VkCommandBufferAllocateInfo.ncommandPool(allocateInfo, commandPool[0]);
@@ -663,7 +665,7 @@ final class renderer2 {
         static void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
             vkEndCommandBuffer(commandBuffer);
 
-            final long pointers = MemSysm.mallocLongPtr(commandBuffer);
+            final long pointers = memAddress0(VkUtils2.MemSys.stack().longs(commandBuffer.address()));
             memPutAddress(submitInfo1.address() + VkSubmitInfo.PCOMMANDBUFFERS, pointers);
             VkSubmitInfo.ncommandBufferCount(submitInfo1.address(), 1);
 
@@ -909,7 +911,7 @@ final class renderer2 {
 
         static void createDescriptorPool() {
             {
-                VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.create(MemSysm.malloc0(), 2);
+                VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.create(MemSysm.calloc(2,VkDescriptorPoolSize.SIZEOF), 2);
 //                        .type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
 //                        .descriptorCount(PipeLine.swapChainImages.length);
                 VkDescriptorPoolSize uniformBufferPoolSize = poolSize.get(0)
@@ -917,9 +919,9 @@ final class renderer2 {
                         .descriptorCount(VkUtils2.SwapChainSupportDetails.swapChainImages.length);
 
                 VkDescriptorPoolSize textureSamplerPoolSize = poolSize.get(1)
-//                        .type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+                        .type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
                         .descriptorCount(VkUtils2.SwapChainSupportDetails.swapChainImages.length);
-                VkDescriptorPoolCreateInfo poolCreateInfo = VkDescriptorPoolCreateInfo.create(MemSysm.malloc3(poolSize.sizeof()*8L)).sType$Default()
+                VkDescriptorPoolCreateInfo poolCreateInfo = VkDescriptorPoolCreateInfo.create(MemSysm.calloc(VkDescriptorPoolCreateInfo.SIZEOF)).sType$Default()
 //                        .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO)
                         .pPoolSizes(poolSize)
                         .maxSets(VkUtils2.PipeLine.swapChainImages.length);
@@ -935,7 +937,7 @@ final class renderer2 {
                     layouts.put(i, descriptorSetLayout);
                 }
 
-                VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.create(MemSysm.malloc0()).sType$Default();
+                VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.create(MemSysm.calloc(VkDescriptorSetAllocateInfo.SIZEOF)).sType$Default();
 //                allocInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
                 allocInfo.descriptorPool(descriptorPool[0])
                         .pSetLayouts(layouts);
