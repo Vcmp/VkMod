@@ -242,7 +242,10 @@ public static final class theUnSafe
             GL11.nglCallLists(buffer.mark().limit(), GL11.GL_UNSIGNED_INT, getPointer(buffer));
         }*/
 
-        public static void memcpy2(float[] vertices, long handle, int l)
+        public static void memcpy2(Object vertices, long handle, int l)
+        {
+            theUnSafe.UNSAFE.copyMemory(vertices, 16, null, handle, l);
+        }public static void memcpy2(float[] vertices, long handle, int l)
         {
             theUnSafe.UNSAFE.copyMemory(vertices, 16, null, handle, l);
         }

@@ -121,8 +121,8 @@ static final class invocationcallbacks {
         glfwSetCursorPosCallback(window, (cursorFallback = GLFWCursorPosCallback.create((window1, xPos, yPos) -> {
 
 
-//            x = xPos;
-//            y = yPos;
+            x = xPos;
+            y = yPos;
             System.out.println(xPos + "+" + yPos);
         })));
 

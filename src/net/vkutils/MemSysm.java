@@ -31,7 +31,7 @@ final record MemSysm() /*implements MemoryAllocator*/ {
     private static long frame;
     static long stacks;
     static final HashMap<Long, Long> tracker = new HashMap<>();
-    static final long size = 16L;//0x1FF;
+    static final long size = 512L;//0x1FF;
     static final long address = JEmalloc.nje_malloc(size);//+VkMemoryRequirements.SIZEOF;//nmemAllocChecked(Pointer.POINTER_SIZE);
         static
         {
@@ -136,7 +136,8 @@ final record MemSysm() /*implements MemoryAllocator*/ {
 
         getOffset();
         frame += size;
-        final long l = address + frame;
+        long l = address + frame;
+        l=alignAs(l);
         System.out.println("AlloctaionMalloc2: "+l+"--->"+Thread.currentThread().getStackTrace()[2]);
         return l;
         /*final long l = JEmalloc.nje_malloc(1);
@@ -164,16 +165,21 @@ final record MemSysm() /*implements MemoryAllocator*/ {
 
     public static long malloc3(long size)
     {
-        /*if(size+address>MemSysm.size+address)
+        if(frame>size)
         {
 //            throw new UnsupportedOperationException("No Enough Memory: "+ Thread.currentThread().getStackTrace()[2]);
-        }*/
+        }
         getOffset();
         //        JEmalloc.nje_sdallocx();
         //size+=size%2;
         frame += size;
          long l = address + (frame - size);
+         System.out.println(l);
         l = alignAs(l);
+        if(sizeof(l) > size)
+        {
+           System.err.println(sizeof(l)+"="+size);
+        }
         System.out.println("AlloctaionMalloc3: "+l+"--->"+Thread.currentThread().getStackTrace()[2]);
         return l;
     }
@@ -192,12 +198,23 @@ final record MemSysm() /*implements MemoryAllocator*/ {
     public static long mallocLongPtr(long descriptorSets)
     {
         System.out.println("AllocatingL: "+descriptorSets+" Total Allocations : "+stacks+"  "+Thread.currentThread().getStackTrace()[2]);
-        long s = JEmalloc.nje_malloc(sizeof(descriptorSets));
+        long s = JEmalloc.nje_malloc(alignAs(sizeof(descriptorSets)));
         tracker.put(s, descriptorSets);
         stacks+=8;
         System.out.println("Allocated: "+s);
         memPutLong(s, descriptorSets);
         return s;
+
+    }public static long mallocLongPtr2(long... descriptorSets)
+    {
+        System.out.println("AllocatingL: "+descriptorSets[0]+" Total Allocations : "+stacks+"  "+Thread.currentThread().getStackTrace()[2]);
+        PointerBuffer s =memPointerBuffer(address+frame,descriptorSets.length).put(descriptorSets);
+        frame+=descriptorSets.length*8L;
+        //tracker.put(s, descriptorSets);
+        stacks+=8;
+        System.out.println("Allocated: "+s);
+        //memPutLong(s, descriptorSets);
+        return s.address0();
 
     }
 
@@ -262,15 +279,16 @@ final record MemSysm() /*implements MemoryAllocator*/ {
         Memsys2.free(allocateInfo);
         System.out.println("Attempting to CallS: ->"+allocateInfo+"-->"+Thread.currentThread().getStackTrace()[2]);
         Checks.check(allocateInfo.address());
-        Memsys2.checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, pDummyPlacementPointerAlloc, vkCreateBuffer));
-        return pDummyPlacementPointerAlloc[0];
+//todo--->        Memsys2.checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, allocateInfo.address(), vkCreateBuffer));
+        Memsys2.checkCall(callPPPI(device.address(), allocateInfo.address(), NULL, vkCreateBuffer));
+        return memGetLong(allocateInfo.address());
     }
 
     static long doPointerAlloc5L(Pointer device, Pointer pipelineInfo)
     {
         Checks.check(pipelineInfo.address());
-        Memsys2.checkCall(callPJPPPI(device.address(), VK_NULL_HANDLE, 1, pipelineInfo.address(), NULL, pDummyPlacementPointerAlloc, renderer2.Buffers.capabilities.vkCreateGraphicsPipelines));
-        return pDummyPlacementPointerAlloc[0];
+        Memsys2.checkCall(callPJPPPI(device.address(), VK_NULL_HANDLE, 1, pipelineInfo.address(), NULL, pipelineInfo.address(), renderer2.Buffers.capabilities.vkCreateGraphicsPipelines));
+        return memGetLong(pipelineInfo.address());
     }
 
     public static IntBuffer callocM(int sizeNum)
@@ -301,6 +319,13 @@ final record MemSysm() /*implements MemoryAllocator*/ {
         return address+frame;
     }
 
+    public static long doPointerAllocSafe3(VkSemaphoreCreateInfo allocateInfo, long x)
+    {
+        System.out.println("Attempting to CallS: ->"+allocateInfo+"-->"+Thread.currentThread().getStackTrace()[2]);
+        Memsys2.checkCall(callPPPI(device.address(), allocateInfo.address(), NULL, x));
+        return memGetLong(allocateInfo.address());
+    }
+
     public long nmalloc(int a)
     {
         return stack.nmalloc(Pointer.POINTER_SHIFT, a);   //stack.ncalloc(Pointer.POINTER_SHIFT, a,  Pointer.POINTER_SIZE);
@@ -329,21 +354,66 @@ final record MemSysm() /*implements MemoryAllocator*/ {
         return put;
 
     }
-    public static LongBuffer longs(long... graphicsFamily)
+    //Try to Avoid alloctaing too @far; from teh atcual instance in which it s inetded to be utilsied/ (In rode to aovid ponetia, isues witH misalogn,ents/AccessViolations
+    public static PointerBuffer longs(Reference graphicsFamily)
     {
-        final LongBuffer put = memByteBuffer(address + (frame), graphicsFamily.length * 8).asLongBuffer().put(graphicsFamily).flip();
-        frame+=put.capacity();
-        if(!put.isDirect())
+        final PointerBuffer put = memPointerBuffer(address + (frame), 1);
+        //for (Reference addr: graphicsFamily)
         {
-            throw new RuntimeException("Not Direct");
+            put.put(graphicsFamily.AX());
         }
-        System.out.println("ByteBuf: "+memAddress0(put)+"+"+frame);
+        put.flip();
+        frame+=put.capacity();
+//        if(!put.isDirect())
+//        {
+//            throw new RuntimeException("Not Direct");
+//        }
+        System.out.println("ByteBuf: "+put.address0()+"+"+frame);
+        return put;
+    }public static PointerBuffer longs(Pointer... graphicsFamily)
+    {
+        final PointerBuffer put = memPointerBuffer(address + (frame), graphicsFamily.length );
+        for (Pointer addr: graphicsFamily)
+        {
+            put.put(memGetLong(addr.address()));
+        }
+        put.flip();
+        frame+=put.capacity();
+//        if(!put.isDirect())
+//        {
+//            throw new RuntimeException("Not Direct");
+//        }
+        System.out.println("ByteBuf: "+put.address0()+"+"+frame);
+        return put;
+    }public static PointerBuffer longs(long... graphicsFamily)
+    {
+        final PointerBuffer put = memPointerBuffer(address + (frame), graphicsFamily.length ).put(graphicsFamily).flip();
+        frame+=put.capacity();
+//        if(!put.isDirect())
+//        {
+//            throw new RuntimeException("Not Direct");
+//        }
+        System.out.println("ByteBuf: "+put.address0()+"+"+frame);
         return put;
     }
 
      static final class Memsys2 {
 
 //        private static final PointerBuffer removed = memPointerBuffer(address+0x7FF, 96);
+
+        static void doPointerAllocSafeExp2a(Pointer allocateInfo, long vkCreateBuffer, Reference a)
+        {
+            //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
+            free(allocateInfo);
+            System.out.println("Attempting to Call: ->" + allocateInfo);
+            checkCall(callPPPPI(device.address(), Checks.check(allocateInfo.address()), NULL, a.address(), vkCreateBuffer));
+        }static void doPointerAllocSafeExp2(Pointer allocateInfo, long vkCreateBuffer, Pointer a)
+        {
+            //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
+            free(allocateInfo);
+            System.out.println("Attempting to Call: ->" + allocateInfo);
+            checkCall(callPPPPI(device.address(), Checks.check(allocateInfo.address()), NULL, a.address(), vkCreateBuffer));
+        }
 
         static void doPointerAllocSafe2(Pointer allocateInfo, long vkCreateBuffer, long[] a)
         {
@@ -452,6 +522,11 @@ final record MemSysm() /*implements MemoryAllocator*/ {
                 case VK_SUCCESS -> System.out.println("OK!");
                 case VK_NOT_READY -> throw new RuntimeException("Not ready!");
                 case VK_TIMEOUT -> throw new RuntimeException("Bad TimeOut!");
+                case VK_INCOMPLETE -> throw new RuntimeException("Incomplete!");
+                case VK_ERROR_INITIALIZATION_FAILED -> throw new RuntimeException("Error: bad Initialisation!");
+                case VK_ERROR_FRAGMENTED_POOL -> throw new RuntimeException("Error: bad Mem Alloc");
+                case VK_ERROR_OUT_OF_HOST_MEMORY -> throw new RuntimeException("No Host Memory");
+                case VK_ERROR_OUT_OF_DEVICE_MEMORY -> throw new RuntimeException("No Device Memory");
                 default -> throw new RuntimeException("Unknown Error!");
             }
         }
