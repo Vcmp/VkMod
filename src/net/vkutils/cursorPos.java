@@ -105,15 +105,11 @@ static final class invocationcallbacks {
             System.out.println("IsPressed:" + isPressed + "IsReleased: " + isReleased);
         }));
         glfwSetScrollCallback(window, scrollCallback = GLFWScrollCallback.create((window1, xoffset1, yoffset1) -> {
-//            xoffset = xoffset1;
-//            yoffset = yoffset1;
             System.out.println(xoffset1 + "+" + yoffset1);
         }));
         glfwSetFramebufferSizeCallback(window, framebuffer = GLFWFramebufferSizeCallback.create((l, i, i1) -> {
 
             System.out.println("ReSize");
-//            GL11.glViewport(0,0,i,i1);
-//            framebuffer.set(window);
             glfwSetWindowMonitor(window, monitor, 0, 0, i, i1, -1);
 
         }));

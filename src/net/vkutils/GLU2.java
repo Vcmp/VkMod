@@ -10,28 +10,7 @@ public static final class theUnSafe
     static final Unsafe UNSAFE;
 
 
-       /* public static final FloatBuffer MODView = BufferUtils.createFloatBuffer(0x1FFFFF);
-        //     static final FloatBuffer PROJ = BufferUtils.createFloatBuffer(0x1FFFFF);
-        //static final FloatBuffer INCBUF = BufferUtils.createFloatBuffer(0x1FFFFF);
-
-        private static final float[] MATRIX = {1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1};*/
     //private static final int offset = 16;
-        /*private static final FloatBuffer matrix2 = BufferUtils.createFloatBuffer(offset).put((MATRIX), 0, (MATRIX).length);
-
-
-        private static final FloatBuffer matrix = BufferUtils.createFloatBuffer(offset);
-        private static final double PI2 = 2F * (Math.atan(1) * 4) / 180F;
-        private static final double RADIANS = 2F / PI2;
-        private static final float COTANGENT = (float) Math.cos(RADIANS) / (float) Math.sin(RADIANS);
-        private static final float FOVModifier = 0.0F;//1.0F
-
-        private static final float[] IDENTITY_MATRIX = {1.0F, 0.0F, 0.0F, 0.0F,
-                0.0F, COTANGENT, 0.0F, 0.0F,
-                0.0F, 0.0F, 1.0F, -1.0F,
-                0.0F, 0.0F, -2.0F * 0.05F, FOVModifier};*/
 
     static {
         UNSAFE=extracted();
@@ -56,13 +35,7 @@ public static final class theUnSafe
 
 
 
-       /* private static void __gluMakeIdentityf() {
-//        int oldPos = matrix.position();
-//        matrix;
-            matrix.rewind().put(IDENTITY_MATRIX, 0, IDENTITY_MATRIX.length);
-        }
-*/
-       /* public static void gluPerspective(float aspect, float zFar, float zNear) {
+        /* public static void gluPerspective(float aspect, float zFar, float zNear) {
             *//*if (deltaZ != 0.0F && sine != 0.0F && aspect != 0.0F)*//*
             {
 //                        __gluMakeIdentityf();
@@ -76,19 +49,6 @@ public static final class theUnSafe
             }
         }*/
 
-       /* private static void glMultMatrix(float[] a) {
-            GL30.nglMultMatrixf(getPointer(matrix.put(0, a)));
-        }
-
-        private static void glMultMatrix(FloatBuffer modView) {
-            modView.rewind();
-            GL30.nglMultMatrixf(getPointer(modView));
-//        modView.rewind();
-        }*/
-
-       /* public static long getPointer(Object obj) {
-            return UNSAFE.getLong(obj, offset);
-        }*/
         public static long getPointer(Object obj, long offset) {
             return theUnSafe.UNSAFE.getLong(obj, offset);
         }
@@ -216,32 +176,6 @@ public static final class theUnSafe
             glMultMatrix(MODView);
 //        GL11.glRotatef(w,x,y,z);
         }*/
-
-
-       /* public static void glLightfv(int i, int i1, FloatBuffer func_1156_a) {
-            GL11.nglLightfv(i, i1, getPointer(func_1156_a));
-        }
-
-        public static void glLightModelfv(int i, FloatBuffer func_1156_a) {
-            GL11.nglLightModelfv(i, getPointer(func_1156_a));
-        }
-
-        public static void glLoadIdentity(int i) {
-//        GL21.glBufferData(GL21.GL_ARRAY_BUFFER, matrix.put(0, IDENTITY_MATRIX2), GL21.GL_STREAM_COPY);
-            GL11.glMatrixMode(i);
-            INCBUF.rewind().put(MATRIX, 0, MATRIX.length);
-            GL11.nglLoadMatrixf(getPointer(INCBUF));
-
-        }
-
-        public static void glLoadIdentity() {
-            GL11.nglLoadMatrixf(getPointer(matrix2));
-        }
-
-        public static void glCallLists(IntBuffer buffer) {
-            GL11.nglCallLists(buffer.mark().limit(), GL11.GL_UNSIGNED_INT, getPointer(buffer));
-        }*/
-
         public static void memcpy2(Object vertices, long handle, int l)
         {
             theUnSafe.UNSAFE.copyMemory(vertices, 16, null, handle, l);

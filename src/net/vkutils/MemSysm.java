@@ -2,10 +2,7 @@ package vkutils;
 
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.Checks;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.Pointer;
-import org.lwjgl.system.Struct;
+import org.lwjgl.system.*;
 import org.lwjgl.system.jemalloc.JEmalloc;
 import org.lwjgl.vulkan.*;
 
@@ -56,11 +53,6 @@ final record MemSysm() /*implements MemoryAllocator*/ {
             System.err.println("WARN:C: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
         }
-       /* if(Memsys2.contains(l))
-        {
-            System.err.println("WARN:C: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
-
-        }*/
         System.out.println("AllocatingC: " + size + " With Capacity: " + 1 + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
         stacks += size;
         tracker.put(l, size);
@@ -75,11 +67,6 @@ final record MemSysm() /*implements MemoryAllocator*/ {
             System.err.println("WARN:C: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
         }
-       /* if(Memsys2.contains(l))
-        {
-            System.err.println("WARN:C: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
-
-        }*/
         System.out.println("AllocatingC: " + size + " With Capacity: " + num + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
         stacks += size;
         tracker.put(l, size);
@@ -94,11 +81,6 @@ final record MemSysm() /*implements MemoryAllocator*/ {
         {
             throw new NullPointerException("Buff NULL!");
         }
-       /* if(tracker.getOrDefault(l, 0L)==size)
-        {
-            System.err.println("WARN:M: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
-            return l;
-        }*/
         System.out.println("AllocatingM: " + size + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
         stacks += size;
         //tracker.put(l, size);
@@ -113,11 +95,6 @@ final record MemSysm() /*implements MemoryAllocator*/ {
             System.err.println("WARN:M: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
             return l;
         }
-       /* if(Memsys2.contains(l))
-        {
-            System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
-
-        }*/
         System.out.println("AllocatingM: " + size + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
         System.out.println("Allocated Size: " + sizeof(l));
 
@@ -140,22 +117,7 @@ final record MemSysm() /*implements MemoryAllocator*/ {
         l=alignAs(l);
         System.out.println("AlloctaionMalloc2: "+l+"--->"+Thread.currentThread().getStackTrace()[2]);
         return l;
-        /*final long l = JEmalloc.nje_malloc(1);
-        if(tracker.getOrDefault(l, 0L)==size)
-        {
-            System.err.println("WARN:M: Is Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
-            return l;
-        }
-        if(Memsys2.contains(l))
-        {
-            System.err.println("WARN:M: Is/Was Already Allocated! "+l+" "+Thread.currentThread().getStackTrace()[2]);
-
-        }
-        System.out.println("AllocatingM: " + size + "Addr: " + l+" Total Allocations : "+stacks+" "+Thread.currentThread().getStackTrace()[2]);
-        stacks += size;
-        tracker.put(l, size);
-        return l;//memAddress0(LibCStdlib.malloc(size));*/
-//        return LibCStdlib.nmalloc(Integer.toUnsignedLong(size));//memAddress0(LibCStdlib.malloc(size));
+        //        return LibCStdlib.nmalloc(Integer.toUnsignedLong(size));//memAddress0(LibCStdlib.malloc(size));
     }
 
     private static void getOffset()
@@ -170,8 +132,6 @@ final record MemSysm() /*implements MemoryAllocator*/ {
 //            throw new UnsupportedOperationException("No Enough Memory: "+ Thread.currentThread().getStackTrace()[2]);
         }
         getOffset();
-        //        JEmalloc.nje_sdallocx();
-        //size+=size%2;
         frame += size;
          long l = address + (frame - size);
          System.out.println(l);
@@ -245,8 +205,6 @@ final record MemSysm() /*implements MemoryAllocator*/ {
     }
 
     static long doPointerAllocSafeExtrm(long allocateInfo, long vkCreateBuffer) {
-        //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator(), pVertexBufferMemory);
-//        Memsys2.free(allocateInfo);
         System.out.println("Attempting to Call: ->"+ memGetLong(allocateInfo));
         Checks.check(allocateInfo);
         Memsys2.checkCall(callPPPPI(device.address(), allocateInfo, NULL, pDummyPlacementPointerAlloc, vkCreateBuffer));
@@ -267,8 +225,6 @@ final record MemSysm() /*implements MemoryAllocator*/ {
      * a fueld refercne is also used just in case dynamically allating with new is less effcienct that sinly wiritng to a static final Reference/memory adress instead
      */
     static long doPointerAllocSafeA(@NotNull Pointer allocateInfo, long vkCreateBuffer) {
-        //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator(), pVertexBufferMemory);
-//        Memsys2.free(allocateInfo);
         System.out.println("Attempting to CallS: ->"+allocateInfo);
         Checks.check(allocateInfo.address());
         Memsys2.checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, pDummyPlacementPointerAlloc, vkCreateBuffer));
@@ -364,10 +320,6 @@ final record MemSysm() /*implements MemoryAllocator*/ {
         }
         put.flip();
         frame+=put.capacity();
-//        if(!put.isDirect())
-//        {
-//            throw new RuntimeException("Not Direct");
-//        }
         System.out.println("ByteBuf: "+put.address0()+"+"+frame);
         return put;
     }public static PointerBuffer longs(Pointer... graphicsFamily)
@@ -379,20 +331,12 @@ final record MemSysm() /*implements MemoryAllocator*/ {
         }
         put.flip();
         frame+=put.capacity();
-//        if(!put.isDirect())
-//        {
-//            throw new RuntimeException("Not Direct");
-//        }
         System.out.println("ByteBuf: "+put.address0()+"+"+frame);
         return put;
     }public static PointerBuffer longs(long... graphicsFamily)
     {
         final PointerBuffer put = memPointerBuffer(address + (frame), graphicsFamily.length ).put(graphicsFamily).flip();
         frame+=put.capacity();
-//        if(!put.isDirect())
-//        {
-//            throw new RuntimeException("Not Direct");
-//        }
         System.out.println("ByteBuf: "+put.address0()+"+"+frame);
         return put;
     }
@@ -423,8 +367,6 @@ final record MemSysm() /*implements MemoryAllocator*/ {
             checkCall(callPPPPI(device.address(), Checks.check(allocateInfo.address()), NULL, a, vkCreateBuffer));
         }static void doPointerAllocSafe22(Pointer allocateInfo, long vkCreateBuffer, long[] a)
         {
-            //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
-//            free(allocateInfo);
             System.out.println("Attempting to Call: ->" + allocateInfo);
             Checks.check(allocateInfo.address());
             checkCall(callPPPPI(device.address(), allocateInfo.address(), NULL, a, vkCreateBuffer));
@@ -531,17 +473,6 @@ final record MemSysm() /*implements MemoryAllocator*/ {
             }
         }
 
-        /*private static boolean contains(long l)
-        {
-            //removed.rewind();
-            for (int i = 0; i< removed.limit(); i++)
-            {
-                if(removed.get(i)==l)
-                    return true;
-            }
-            return false;
-        }*/
-
          public static void free(IntBuffer ints)
          {
              JEmalloc.je_free(ints);
@@ -563,24 +494,11 @@ final record MemSysm() /*implements MemoryAllocator*/ {
              checkCall(callPPPPI(device.address(), imageInfo, NULL, a, vkCreateImage));
          }
 
-       /* @Override
-        public boolean equals(Object obj)
-        {
-            return obj == this || obj != null && obj.getClass() == this.getClass();
-        }
 
-        @Override
-        public int hashCode()
-        {
-            return 1;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "Memsys2[]";
-        }*/
-
-
-    }
+         public static void /*long*/ doPointerAllocSafeX(Pointer createInfo, long vkCreateSwapchainKHR, long swapChain)
+         {
+             callPPPPI(device.address(), createInfo.address(), NULL, swapChain, vkCreateSwapchainKHR);
+             //return  swapChain;
+         }
+     }
 }
