@@ -272,14 +272,20 @@ final record MemSysm() /*implements MemoryAllocator*/ {
     {
         System.out.println(JEmalloc.nje_malloc_usable_size(address));
 //        JEmalloc.nje_sdallocx();
-        return address+frame;
+        return (address+frame);
     }
 
     public static long doPointerAllocSafe3(VkSemaphoreCreateInfo allocateInfo, long x)
     {
+        Memsys2.free(allocateInfo);
         System.out.println("Attempting to CallS: ->"+allocateInfo+"-->"+Thread.currentThread().getStackTrace()[2]);
         Memsys2.checkCall(callPPPI(device.address(), allocateInfo.address(), NULL, x));
         return memGetLong(allocateInfo.address());
+    }
+
+    public static long mallocSafe(int sizeof)
+    {
+        return stack.nmalloc(Pointer.POINTER_SIZE, sizeof);
     }
 
     public long nmalloc(int a)
@@ -298,9 +304,9 @@ final record MemSysm() /*implements MemoryAllocator*/ {
 //        return nmemCallocChecked(1, 8);
     }
 
-    public static IntBuffer ints(int... graphicsFamily)
+    public static @NotNull IntBuffer ints(int... graphicsFamily)
     {
-        final IntBuffer put = memByteBuffer(address + (frame), graphicsFamily.length * 4).asIntBuffer().put(graphicsFamily).flip();
+        final IntBuffer put = memByteBuffer(alignAs(address + (frame)), graphicsFamily.length * 4).asIntBuffer().put(graphicsFamily).flip();
         frame+=put.capacity();
         if(!put.isDirect())
         {
@@ -322,7 +328,7 @@ final record MemSysm() /*implements MemoryAllocator*/ {
         frame+=put.capacity();
         System.out.println("ByteBuf: "+put.address0()+"+"+frame);
         return put;
-    }public static PointerBuffer longs(Pointer... graphicsFamily)
+    }public static @NotNull PointerBuffer longs(Pointer... graphicsFamily)
     {
         final PointerBuffer put = memPointerBuffer(address + (frame), graphicsFamily.length );
         for (Pointer addr: graphicsFamily)
@@ -495,7 +501,7 @@ final record MemSysm() /*implements MemoryAllocator*/ {
          }
 
 
-         public static void /*long*/ doPointerAllocSafeX(Pointer createInfo, long vkCreateSwapchainKHR, long swapChain)
+         public static void doPointerAllocSafeX(Pointer createInfo, long vkCreateSwapchainKHR, long swapChain)
          {
              callPPPPI(device.address(), createInfo.address(), NULL, swapChain, vkCreateSwapchainKHR);
              //return  swapChain;

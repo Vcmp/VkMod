@@ -28,7 +28,7 @@ final class ShaderSPIRVUtils {
             return compileShader(shaderFile, source, shaderKind);
         } catch (IOException e) {
             e.printStackTrace();
-            e.getCause();
+//            e.getCause();
         }
         return null;
     }

@@ -6,7 +6,10 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.stb.STBImage;
-import org.lwjgl.system.*;
+import org.lwjgl.system.Configuration;
+import org.lwjgl.system.JNI;
+import org.lwjgl.system.Pointer;
+import org.lwjgl.system.Struct;
 import org.lwjgl.system.jemalloc.JEmalloc;
 import org.lwjgl.vulkan.*;
 
@@ -175,7 +178,7 @@ public final class VkUtils2 {
         InstCreateInfo.enabledExtensionCount();
         InstCreateInfo.enabledLayerCount();
         if(ENABLE_VALIDATION_LAYERS) {
-            memPutLong(InstCreateInfo.address() + VkInstanceCreateInfo.PPENABLEDLAYERNAMES, memAddress(asPointerBuffer()));
+            memPutLong(InstCreateInfo.address() + VkInstanceCreateInfo.PPENABLEDLAYERNAMES, (asPointerBuffer()));
             memPutLong(InstCreateInfo.address() + VkInstanceCreateInfo.ENABLEDLAYERCOUNT, VALIDATION_LAYERS.size());
         }
 //            else InstCreateInfo.pNext(NULL);
@@ -304,7 +307,7 @@ public final class VkUtils2 {
 
     }
 
-    private static PointerBuffer asPointerBuffer() {
+    private static long asPointerBuffer() {
 
 
         int size = VALIDATION_LAYERS.size();
@@ -313,8 +316,8 @@ public final class VkUtils2 {
         for (String s : VALIDATION_LAYERS) {
             buffer.put(MemSysm.stack.UTF8(s));
         }
-
-        return buffer.rewind();
+        MemSysm.Memsys2.free(buffer);
+        return buffer.rewind().address0();
 
     }
 
@@ -653,7 +656,7 @@ public final class VkUtils2 {
 
             final ByteBuffer entryPoint = MemSysm.stack.UTF8("main");
 
-            VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.calloc(2).sType$Default();
+            VkPipelineShaderStageCreateInfo.Buffer shaderStages = VkPipelineShaderStageCreateInfo.create(MemSysm.malloc(VkPipelineShaderStageCreateInfo.SIZEOF*2L), 2).sType$Default();
 
             shaderStages.get(0).sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
@@ -668,7 +671,7 @@ public final class VkUtils2 {
                     .pName(entryPoint);
 
 
-            VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = VkPipelineVertexInputStateCreateInfo.calloc().sType$Default()
+            VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = VkPipelineVertexInputStateCreateInfo.create(MemSysm.malloc(VkPipelineVertexInputStateCreateInfo.SIZEOF)).sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
                     .pVertexBindingDescriptions(getVertexInputBindingDescription());
             //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
@@ -683,7 +686,7 @@ public final class VkUtils2 {
              *
              * (CorretcioN: had actually also used viewportBuffer and not vkViewport(Of type VkViewport.Bufferand not VkViewPort....) in VkPipelineViewportStateCreateInfo as well)
              */
-            VkViewport.Buffer vkViewport = VkViewport.malloc(1)
+            VkViewport.Buffer vkViewport = VkViewport.create(MemSysm.malloc(VkViewport.SIZEOF),1)
                     .x(0.0F)
                     .y(0.0F)
                     .width(SwapChainSupportDetails.swapChainExtent.width())
@@ -691,19 +694,19 @@ public final class VkUtils2 {
                     .minDepth(0.0F)
                     .maxDepth(1.0F);
 
-            VkRect2D.Buffer scissor = VkRect2D.malloc(1)
+            VkRect2D.Buffer scissor = VkRect2D.create(MemSysm.malloc(VkRect2D.SIZEOF), 1)
 //                    .offset(vkOffset2D ->vkViewport.y()) //todo: not sure if correct Offset
                     .offset(renderer2.Buffers.set)
                     .extent(SwapChainSupportDetails.swapChainExtent);
 
-            VkPipelineViewportStateCreateInfo vkViewPortState = VkPipelineViewportStateCreateInfo.calloc().sType$Default()
+            VkPipelineViewportStateCreateInfo vkViewPortState = VkPipelineViewportStateCreateInfo.create(MemSysm.malloc3(VkPipelineViewportStateCreateInfo.SIZEOF)).sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO)
                     .pViewports(vkViewport)
 //                    .pScissors(vkrect2DBuffer);
                     .pScissors(scissor);
 
 
-            VkPipelineRasterizationStateCreateInfo VkPipeLineRasterization = VkPipelineRasterizationStateCreateInfo.calloc().sType$Default()
+            VkPipelineRasterizationStateCreateInfo VkPipeLineRasterization = VkPipelineRasterizationStateCreateInfo.create(MemSysm.malloc3(VkPipelineRasterizationStateCreateInfo.SIZEOF)).sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO)
                     .depthClampEnable(false)
                     .rasterizerDiscardEnable(false)
@@ -714,7 +717,7 @@ public final class VkUtils2 {
                     .depthBiasEnable(false);
 
             //todo: actuall need multismapling to Compleet.Initialsie.Construct.Substanciate the renderPipeline corretcly even if Antialsing /AF/MMs are not neeeded......
-            VkPipelineMultisampleStateCreateInfo multisampling = VkPipelineMultisampleStateCreateInfo.calloc().sType$Default()
+            VkPipelineMultisampleStateCreateInfo multisampling = VkPipelineMultisampleStateCreateInfo.create(MemSysm.malloc3(VkPipelineMultisampleStateCreateInfo.SIZEOF)).sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO)
                     .sampleShadingEnable(false)
                     .rasterizationSamples(VK_SAMPLE_COUNT_1_BIT);
@@ -722,7 +725,7 @@ public final class VkUtils2 {
 //                    .alphaToCoverageEnable(false);
 
 
-            VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.calloc().sType$Default()
+            VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.create(MemSysm.mallocSafe(VkPipelineDepthStencilStateCreateInfo.SIZEOF)).sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO)
                     .depthTestEnable(true)
                     .depthWriteEnable(true)
@@ -746,16 +749,15 @@ public final class VkUtils2 {
 //                    .dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO)
 //                    .alphaBlendOp(VK_BLEND_OP_ADD);
 
-            VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.malloc().sType$Default()
+            VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.create(MemSysm.malloc3(VkPipelineColorBlendStateCreateInfo.SIZEOF)).sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO)
                     .logicOpEnable(false)
                     .logicOp(VK_LOGIC_OP_COPY)
                     .pAttachments(colorBlendAttachment)
                     .blendConstants(MemSysm.stack.floats(0.0f, 0.0f, 0.0f, 0.0f));
 //            memFree(colorBlendAttachment);
-            memFree(vkViewport);
-            memFree(scissor);
-            VkPushConstantRange.Buffer vkPushConstantRange = VkPushConstantRange.calloc(1, MemSysm.stack)
+
+            VkPushConstantRange.Buffer vkPushConstantRange = VkPushConstantRange.create(MemSysm.malloc3(VkPipelineColorBlendStateCreateInfo.SIZEOF),1)
                     .offset(0)
                     .size(16*Float.BYTES)
                     .stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
@@ -789,20 +791,18 @@ public final class VkUtils2 {
                     .subpass(0)
 //                    .basePipelineHandle(VK_NULL_HANDLE)
                     .basePipelineIndex(-1);
-            memFree(shaderStages);
-            nmemFree(colorBlending.address());
-            //memFree(pipelineInfo);
-            nmemFree(vkPipelineVertexInputStateCreateInfo.address());
-            nmemFree(inputAssembly.address());
-
-            nmemFree(vkViewPortState.address());
-            nmemFree(VkPipeLineRasterization.address());
-            nmemFree(multisampling.address());
-            nmemFree(depthStencil.address());
+            MemSysm.Memsys2.free(shaderStages);
+            MemSysm.Memsys2.free(colorBlending);
+            MemSysm.Memsys2.free(pipelineInfo);
+            MemSysm.Memsys2.free(vkPipelineVertexInputStateCreateInfo);
+            MemSysm.Memsys2.free(inputAssembly);
+//            MemSysm.Memsys2.free(vkViewPortState);
+//            MemSysm.Memsys2.free(VkPipeLineRasterization);
+//            MemSysm.Memsys2.free(multisampling);
+            MemSysm.Memsys2.free(depthStencil);
 
             //Memsys2.free(entryPoint);
             renderer2.Buffers.graphicsPipeline = MemSysm.doPointerAlloc5L(device, pipelineInfo);
-            MemSysm.Memsys2.free(pipelineInfo);
 
             vkDestroyShaderModule(device, vertShaderModule, MemSysm.pAllocator);
             vkDestroyShaderModule(device, fragShaderModule, MemSysm.pAllocator);
@@ -879,7 +879,8 @@ public final class VkUtils2 {
 
 
             MemSysm.Memsys2.doPointerAllocSafeX(vkRenderPassCreateInfo1, renderer2.Buffers.capabilities.vkCreateRenderPass, SwapChainSupportDetails.renderPass);
-
+            MemSysm.Memsys2.free(dependency);
+            MemSysm.Memsys2.free(vkRenderPassCreateInfo1);
 
         }
 
@@ -993,6 +994,7 @@ public final class VkUtils2 {
 //                                .pEnabledFeatures(deviceFeatures);
 
                 createInfo.pQueueCreateInfos(queueCreateInfos);
+                MemSysm.Memsys2.free(queueCreateInfos);
                 // queueCreateInfoCount is automatically set
 
 //                memPutLong(createInfo.address() + VkDeviceCreateInfo.PENABLEDFEATURES, deviceFeatures2.address());
@@ -1257,6 +1259,7 @@ public final class VkUtils2 {
                     .usage(usage)
                     .samples(VK_SAMPLE_COUNT_1_BIT)
                     .sharingMode(VK_SHARING_MODE_EXCLUSIVE);
+            MemSysm.Memsys2.free(imageInfo);
             MemSysm.Memsys2.doPointerAllocSafeX(imageInfo, renderer2.Buffers.capabilities.vkCreateImage, pTextureImage);
             VkMemoryDedicatedRequirementsKHR img2 = VkMemoryDedicatedRequirementsKHR.create(MemSysm.address).sType$Default();
 
@@ -1278,7 +1281,7 @@ public final class VkUtils2 {
                 allocInfo.pNext(dedicatedAllocateInfoKHR);
             }
 
-
+            MemSysm.Memsys2.free(allocInfo);
             MemSysm.Memsys2.doPointerAllocSafeX(allocInfo, renderer2.Buffers.capabilities.vkAllocateMemory, renderer2.Buffers.vkAllocMemory);
 
             vkBindImageMemory(device, memGetLong(pTextureImage),memGetLong(renderer2.Buffers.vkAllocMemory), 0);
