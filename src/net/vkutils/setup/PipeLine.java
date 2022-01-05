@@ -14,48 +14,7 @@ import static vkutils.setup.Queues.device;
 public final class PipeLine {
 
 
-    //Manipulate indicies to use indexes more likley to be dulcitaed when.if cases of adjency occur to allow vereycoes to be shared between Blocks/Quads COmposits.Hybrids
-    static final short[] indicesTemp = {
-
-            0, 1, 2, 2, 3, 0,
-            4, 5, 6, 6, 7, 4,
-            8, 9, 10, 10, 11, 8,
-            12, 13, 14, 14, 15, 12,
-            16, 17, 18, 18, 19, 16,
-            20, 21, 22, 22, 23, 20
-
-            /*0, 1, 2, 2, 3, 0,
-            0, 1, 5, 5, 4, 0,
-            1, 2, 6, 6, 5, 1,
-            4, 5, 6, 6, 7, 4,
-            4, 7, 3, 3, 0, 4,
-            7, 6, 2, 2, 3, 7,*/
-/*
-            0+8, 1+8, 2+8, 2+8, 3+8, 0+8,
-            0+8, 1+8, 5+8, 5+8, 4+8, 0+8,
-            1+8, 2+8, 6+8, 6+8, 5+8, 1+8,
-            4+8, 5+8, 6+8, 6+8, 7+8, 4+8,
-            4+8, 7+8, 3+8, 3+8, 0+8, 4+8,
-            7+8, 6+8, 2+8, 2+8, 3+8, 7+8,
-
-            0+16, 1+16, 2+16, 2+16, 3+16, 0+16,
-            0+16, 1+16, 5+16, 5+16, 4+16, 0+16,
-            1+16, 2+16, 6+16, 6+16, 5+16, 1+16,
-            4+16, 5+16, 6+16, 6+16, 7+16, 4+16,
-            4+16, 7+16, 3+16, 3+16, 0+16, 4+16,
-            7+16, 6+16, 2+16, 2+16, 3+16, 7+16,*/
-    };
-
-
-    //prepAlloc
-    //        private static final long[] vkRenderPass = new long[SwapChainSupportDetails.imageIndex];
-    static final long[] swapChainImages = new long[3];
-    private static final int OFFSETOF_COLOR = 3 * Float.BYTES;
-    private static final int OFFSET_POS = 0;
-
-    private static final int OFFSETOF_TEXTCOORDS = (3 + 3) * Float.BYTES;
-
-//            nvkMapMemory(Queues.device, stagingBufferMemory, 0, SIZEOFIn, 0, address);
+    //            nvkMapMemory(Queues.device, stagingBufferMemory, 0, SIZEOFIn, 0, address);
 
     //        static final int SIZEOFIn = Short.BYTES * renderer.Buffers.indices.length;
 
@@ -94,7 +53,7 @@ public final class PipeLine {
 //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
                 .pVertexBindingDescriptions(getVertexInputBindingDescription());
         //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
-        memPutAddress(vkPipelineVertexInputStateCreateInfo.address() + VkPipelineVertexInputStateCreateInfo.PVERTEXATTRIBUTEDESCRIPTIONS, (getAttributeDescriptions()));
+        memPutAddress(vkPipelineVertexInputStateCreateInfo.address() + VkPipelineVertexInputStateCreateInfo.PVERTEXATTRIBUTEDESCRIPTIONS, (Shaders.getAttributeDescriptions()));
         VkPipelineVertexInputStateCreateInfo.nvertexAttributeDescriptionCount(vkPipelineVertexInputStateCreateInfo.address(), 3);
         VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc().sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO)
@@ -215,9 +174,6 @@ public final class PipeLine {
         pipelineInfo.free();
         vkPipelineVertexInputStateCreateInfo.free();
         inputAssembly.free();
-//            MemSysm.Memsys2.free(vkViewPortState);
-//            MemSysm.Memsys2.free(VkPipeLineRasterization);
-//            MemSysm.Memsys2.free(multisampling);
         depthStencil.free();
 
         //Memsys2.free(entryPoint);
@@ -232,7 +188,7 @@ public final class PipeLine {
 
     }
 
-    static void createRenderPasses(boolean depthEnabled)
+    static void createRenderPasses()
     {
         int capacity = 2;
         VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.create(MemSysm.address, capacity);
@@ -255,8 +211,8 @@ public final class PipeLine {
                 .samples(VK_SAMPLE_COUNT_1_BIT)
                 .loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
                 .storeOp(VK_ATTACHMENT_STORE_OP_STORE)
-//                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-//                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
+                    .stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
+                    .stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE)
                 .initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
                 .finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
         //TODO: WARn Possible FAIL!
@@ -326,38 +282,6 @@ public final class PipeLine {
 //                    .stride(vertices.length/VERT_SIZE+1)
                 .stride(Buffers.VERTICESSTRIDE)
                 .inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
-    }
-
-    private static long getAttributeDescriptions()
-    {
-
-        VkVertexInputAttributeDescription.Buffer attributeDescriptions =
-                VkVertexInputAttributeDescription.create(MemSysm.calloc(3, VkVertexInputAttributeDescription.SIZEOF), 3);
-
-        // Position
-        VkVertexInputAttributeDescription posDescription = attributeDescriptions.get(0);
-        posDescription.binding(0);
-        posDescription.location(0);
-        posDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
-        posDescription.offset(OFFSET_POS);
-
-        // Color
-        VkVertexInputAttributeDescription colorDescription = attributeDescriptions.get(1);
-        colorDescription.binding(0);
-        colorDescription.location(1);
-        colorDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
-        colorDescription.offset(OFFSETOF_COLOR);
-
-        // Texture coordinates
-        VkVertexInputAttributeDescription texCoordsDescription = attributeDescriptions.get(2);
-        texCoordsDescription.binding(0);
-        texCoordsDescription.location(2);
-        texCoordsDescription.format(VK_FORMAT_R32G32_SFLOAT);
-        texCoordsDescription.offset(OFFSETOF_TEXTCOORDS);
-
-//            memFree(attributeDescriptions);
-
-        return attributeDescriptions.address0();
     }
 
 

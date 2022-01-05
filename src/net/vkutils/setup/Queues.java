@@ -16,7 +16,6 @@ public final class Queues {
     //        public static long pImageIndex;
     public static VkQueue graphicsQueue;
     public static VkQueue presentQueue;
-    static VkQueue transferQueue;
 
 
     public static VkDevice device;

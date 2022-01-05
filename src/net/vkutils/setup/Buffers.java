@@ -13,7 +13,38 @@ import static vkutils.setup.Queues.*;
 
 public final class Buffers {
     public static final PointerBuffer commandBuffers = memPointerBuffer(MemSysm.malloc3(24), 3);
-    static final short[] indices = new short[PipeLine.indicesTemp.length * 64];
+    //Manipulate indicies to use indexes more likley to be dulcitaed when.if cases of adjency occur to allow vereycoes to be shared between Blocks/Quads COmposits.Hybrids
+    static final short[] indicesTemp = {
+
+            0, 1, 2, 2, 3, 0,
+            4, 5, 6, 6, 7, 4,
+            8, 9, 10, 10, 11, 8,
+            12, 13, 14, 14, 15, 12,
+            16, 17, 18, 18, 19, 16,
+            20, 21, 22, 22, 23, 20
+
+            /*0, 1, 2, 2, 3, 0,
+            0, 1, 5, 5, 4, 0,
+            1, 2, 6, 6, 5, 1,
+            4, 5, 6, 6, 7, 4,
+            4, 7, 3, 3, 0, 4,
+            7, 6, 2, 2, 3, 7,*/
+/*
+            0+8, 1+8, 2+8, 2+8, 3+8, 0+8,
+            0+8, 1+8, 5+8, 5+8, 4+8, 0+8,
+            1+8, 2+8, 6+8, 6+8, 5+8, 1+8,
+            4+8, 5+8, 6+8, 6+8, 7+8, 4+8,
+            4+8, 7+8, 3+8, 3+8, 0+8, 4+8,
+            7+8, 6+8, 2+8, 2+8, 3+8, 7+8,
+
+            0+16, 1+16, 2+16, 2+16, 3+16, 0+16,
+            0+16, 1+16, 5+16, 5+16, 4+16, 0+16,
+            1+16, 2+16, 6+16, 6+16, 5+16, 1+16,
+            4+16, 5+16, 6+16, 6+16, 7+16, 4+16,
+            4+16, 7+16, 3+16, 3+16, 0+16, 4+16,
+            7+16, 6+16, 2+16, 2+16, 3+16, 7+16,*/
+    };
+    static final short[] indices = new short[indicesTemp.length * 64];
     static final int size = Short.BYTES * indices.length;
     static final VkOffset2D set = VkOffset2D.create(MemSysm.malloc3(16)).set(0, 0);
     static long commandPool = 0;//MemSysm.stack.mallocPointer(1);
@@ -23,7 +54,6 @@ public final class Buffers {
      static final long stagingBufferMemory;
      static final long indexBufferMemory;
     static final long vkAllocMemory = MemSysm.malloc3(8); //TODO:BUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG!
-    static final long vkImage = (MemSysm.malloc3(8));
     static final long depthImageView = MemSysm.malloc3(8);
     private static final long offsets = MemSysm.longs(0).address0();
     //        private static final int VERT_SIZE= (OFFSET_POS + OFFSETOF_COLOR + OFFSETOF_TEXTCOORDS) / Float.BYTES;
@@ -34,7 +64,7 @@ public final class Buffers {
     static final long[] indexBuffer = {0};
     private static final int U = 0;
     private static final int V = 0;
-    static final float[] verticesTemp = { //TODO: Auto connetc when adding diitonal evrticies: e.g. if now Block.Cube added, rese preisiting vertocoes to avoid rudplciate/reudicnat faces/vetrcoe sbeign drawnbthat are not vosoable/occluded due to adjency, may be psob;e top use a Indicieis buffer to do thins inherently without the need to manually/systamtcially ascerain verticioe sduplciates manually /methodcially e.g.etc ie.e., preme;tively
+    private static final float[] verticesTemp = { //TODO: Auto connetc when adding diitonal evrticies: e.g. if now Block.Cube added, rese preisiting vertocoes to avoid rudplciate/reudicnat faces/vetrcoe sbeign drawnbthat are not vosoable/occluded due to adjency, may be psob;e top use a Indicieis buffer to do thins inherently without the need to manually/systamtcially ascerain verticioe sduplciates manually /methodcially e.g.etc ie.e., preme;tively
 
             0, 0, 0, 1, 0, 0, U, V,
             1, 1, 0, 0, 1, 0, U + 1, V,
@@ -68,16 +98,16 @@ public final class Buffers {
 
 
     };
-    static int dest = -verticesTemp.length;
-    static final float[] vertices = new float[(verticesTemp.length) * 64];
-    static final int value = /*SIZEOF **/ vertices.length * Float.BYTES;
+    private static int dest = -verticesTemp.length;
+    private static final float[] vertices = new float[(verticesTemp.length) * 64];
+    private static final int value = /*SIZEOF **/ vertices.length * Float.BYTES;
 
     private static final int VERT_SIZE = vertices.length / 8;
 
 
     static long graphicsPipeline;
-    private static VkCommandBufferBeginInfo beginInfo1;
-    private static VkRenderPassBeginInfo renderPassInfo;
+//    private static VkCommandBufferBeginInfo beginInfo1;
+//    private static VkRenderPassBeginInfo renderPassInfo;
     private static final VkSubmitInfo submitInfo1 = VkSubmitInfo.create(MemSysm.calloc(VkSubmitInfo.SIZEOF))//VkUtils2.MemSysm.nmalloc(VkSubmitInfo.ALIGNOF, VkSubmitInfo.SIZEOF);
             .sType$Default();
 
@@ -100,12 +130,12 @@ public final class Buffers {
         //Do VBO/Poriton.chunk offset relatine to current.relative position instea dof need ing to verificy.ascertain Pos.Coords dierct
 
 
-        setBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, value, vertexBuffer, VK_SHARING_MODE_EXCLUSIVE);
+        setBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, value, vertexBuffer);
         vertexBufferMemory = createBuffer2(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer[0]);
-        setBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, value, stagingBuffer, VK_SHARING_MODE_EXCLUSIVE);
+        setBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, value, stagingBuffer);
         stagingBufferMemory = createBuffer2(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer[0]);
-        setBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, Short.BYTES * indices.length, indexBuffer, VK_SHARING_MODE_EXCLUSIVE);
+        setBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, Short.BYTES * indices.length, indexBuffer);
         indexBufferMemory = createBuffer2(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer[0]);
 
     }
@@ -124,7 +154,7 @@ public final class Buffers {
         commandBuffers.put(descriptorSets);
         descriptorSets.free();
 
-        beginInfo1 = VkCommandBufferBeginInfo.create(MemSysm.malloc3(VkCommandBufferBeginInfo.SIZEOF)).sType$Default()
+        VkCommandBufferBeginInfo beginInfo1 = VkCommandBufferBeginInfo.create(MemSysm.malloc3(VkCommandBufferBeginInfo.SIZEOF)).sType$Default()
                 .flags(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
 //            VkRenderPassAttachmentBeginInfo vkRenderPassAttachmentBeginInfo1 = VkRenderPassAttachmentBeginInfo.create(MemSysm.malloc(VkRenderPassAttachmentBeginInfo .SIZEOF))
@@ -141,7 +171,7 @@ public final class Buffers {
         clearValues.get(1).depthStencil().set(1.0f, 0);
 
 
-        renderPassInfo = VkRenderPassBeginInfo.create(MemSysm.malloc3(VkRenderPassBeginInfo.SIZEOF)).sType$Default()
+        VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.create(MemSysm.malloc3(VkRenderPassBeginInfo.SIZEOF)).sType$Default()
 //                    .pNext(vkRenderPassAttachmentBeginInfo1)
                 .pClearValues(clearValues)
                 .renderPass(memGetLong(SwapChainSupportDetails.renderPass))
@@ -160,13 +190,13 @@ public final class Buffers {
         nvkMapMemory(device, UniformBufferObject.uniformBuffersMemory.get(1), 0, UniformBufferObject.capacity, 0, MemSysm.address);
 
         for (int i = 0; i < commandBuffers.capacity(); i++) {
-            extracted(i);
+            extracted(beginInfo1, renderPassInfo, i);
 
         }
 
     }
 
-    private static void extracted(int i)
+    private static void extracted(VkCommandBufferBeginInfo beginInfo1, VkRenderPassBeginInfo renderPassInfo, int i)
     {
         long commandBuffer = commandBuffers.get(i);
         long __functionAddress = device.getCapabilities().vkBeginCommandBuffer;
@@ -196,18 +226,16 @@ public final class Buffers {
             callPV((commandBuffer), indices.length, 1, 0, 0, 0, capabilities.vkCmdDrawIndexed);
             UniformBufferObject.descriptorSets.free();
 
-
+            longs.free();
+            indexedIndirectCommand.free();
+            renderPassInfo.free();
+            beginInfo1.free();
         }
         callPV((commandBuffer), capabilities.vkCmdEndRenderPass);
 
         System.out.println("Using: " + VERTICESSTRIDE + " Vertices");
         System.out.println("Using: " + VERT_SIZE + " Vert SIze/ Tris");
         callPI((commandBuffer), capabilities.vkEndCommandBuffer);
-    }
-
-    private static long getRef()
-    {
-        return memGetLong(commandPool/*.address()*/);
     }
 
     public static void doPointerAllocS(Pointer.Default allocateInfo, long vkAllocateDescriptorSets, PointerBuffer descriptorSets)
@@ -219,38 +247,25 @@ public final class Buffers {
 
     }
 
-    //todo: need to do thsi seperately from createBuffer as Java cannot handle references/pointrs by default and the buffre must be a field due to the bindVertexBuffers call needing acces to teh same VertexBuffer that is cerated, and a methdo/upu cannto return multiple variables/refercnes/valeus at teh same time
-    static long setBuffer2(int usage, int size, int sharingMode)
+    static void setBuffer(int usage, int size, long[] a)
     {
         VkBufferCreateInfo allocateInfo = VkBufferCreateInfo.create(MemSysm.malloc(VkBufferCreateInfo.SIZEOF))
                 .sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
                 .size(size)
                 .usage(usage)
-                .sharingMode(sharingMode);
-
-        return MemSysm.doPointerAllocSafe(allocateInfo, capabilities.vkCreateBuffer);
-        //nmemFree(allocateInfo);
-    }
-
-    static void setBuffer(int usage, int size, long[] a, int sharingMode)
-    {
-        VkBufferCreateInfo allocateInfo = VkBufferCreateInfo.create(MemSysm.malloc(VkBufferCreateInfo.SIZEOF))
-                .sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
-                .size(size)
-                .usage(usage)
-                .sharingMode(sharingMode);
+                .sharingMode(VK_SHARING_MODE_EXCLUSIVE);
 
         MemSysm.Memsys2.doPointerAllocSafe2(allocateInfo, capabilities.vkCreateBuffer, a);
         //nmemFree(allocateInfo);
     }
 
-    static long setBuffer(int usage, int size)
+    static long setBuffer()
     {
         //long allocateInfo = VkUtils2.MemSysm.malloc(VkBufferCreateInfo.SIZEOF);
         VkBufferCreateInfo allocateInfo = VkBufferCreateInfo.create(MemSysm.calloc(VkBufferCreateInfo.SIZEOF))
                 .sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
-                .size(size)
-                .usage(usage)
+                .size(UniformBufferObject.capacity)
+                .usage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
                 .sharingMode(VK_SHARING_MODE_EXCLUSIVE);
         //nmemFree(allocateInfo);
         MemSysm.Memsys2.free(allocateInfo);
@@ -278,7 +293,7 @@ public final class Buffers {
 
     }
 
-    static void createBuffer(int properties, long[] currentBuffer, long[] vertexBufferMemory)
+    static void createBuffer(long[] currentBuffer, long[] vertexBufferMemory)
     {
 
         //long vkMemoryRequirements = VkUtils2.MemSysm.malloc(VkMemoryRequirements.SIZEOF);
@@ -289,7 +304,7 @@ public final class Buffers {
         VkMemoryAllocateInfo allocateInfo1 = VkMemoryAllocateInfo.create(MemSysm.calloc(VkMemoryAllocateInfo.SIZEOF))
                 .sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
                 .allocationSize(VkMemoryRequirements.nsize(MemSysm.address))
-                .memoryTypeIndex(findMemoryType(VkMemoryRequirements.nmemoryTypeBits(MemSysm.address), properties));
+                .memoryTypeIndex(findMemoryType(VkMemoryRequirements.nmemoryTypeBits(MemSysm.address), 6));
 //            nmemFree(vkMemoryRequirements);
         MemSysm.Memsys2.doPointerAllocSafe2(allocateInfo1, capabilities.vkAllocateMemory, vertexBufferMemory);
         long __functionAddress = device.getCapabilities().vkBindBufferMemory;
@@ -347,11 +362,11 @@ public final class Buffers {
     {
         int a = 2;
         int r = verticesTemp.length / 8;
-        System.arraycopy(PipeLine.indicesTemp, 0, indices, 0, PipeLine.indicesTemp.length);
+        System.arraycopy(indicesTemp, 0, indices, 0, indicesTemp.length);
         for (int w = 36; w < indices.length; w += 36) {
             {
-                System.arraycopy(PipeLine.indicesTemp, 0, indices, w, PipeLine.indicesTemp.length);
-                for (int i = w; i < PipeLine.indicesTemp.length * a; i++) {
+                System.arraycopy(indicesTemp, 0, indices, w, indicesTemp.length);
+                for (int i = w; i < indicesTemp.length * a; i++) {
                     indices[i] += r;
                 }
                 r += verticesTemp.length / 8;

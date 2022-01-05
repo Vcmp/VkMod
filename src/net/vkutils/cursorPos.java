@@ -1,13 +1,9 @@
 package vkutils;
 
 import org.lwjgl.glfw.*;
+
 import static org.lwjgl.glfw.GLFW.*;
-
-import java.util.List;
-import java.util.Optional;
-
 import static org.lwjgl.system.JNI.invokeV;
-import static vkutils.setup.SwapChainSupportDetails.swapChainExtent;
 import static vkutils.setup.VkUtils2.window;
 
 
@@ -146,7 +142,7 @@ public static final class invocationcallbacks {
         y=j;
     }
 
-    //SUper Lazy CUt-COpy-{Paste if the origina INput Keyboard Clas Function of the Same Name to faiclate ease Svae EHance SYnergise Enervate Time when Adjusting thenKEyoard INput Hanldingd FUnctions Through Find/Replace/ CTRL+SHFT+ALT+J Substitution and /DIspalcment Equavenciy Exchange laternictaionlsmenbaiaatabiysededu TSgetede /dedhdvetdfrfcc/ /ESC
+//SUper Lazy CUt-COpy-{Paste if the origina INput Keyboard Clas Function of the Same Name to faiclate ease Svae EHance SYnergise Enervate Time when Adjusting thenKEyoard INput Hanldingd FUnctions Through Find/Replace/ CTRL+SHFT+ALT+J Substitution and /DIspalcment Equavenciy Exchange laternictaionlsmenbaiaatabiysededu TSgetede /dedhdvetdfrfcc/ /ESC
 
     public static boolean isKeyDown(int i)
     {
@@ -238,13 +234,13 @@ public static final class invocationcallbacks {
         System.out.println(c);
         return c;
     }
-    public static Optional<String> getEventCharacter()
+    /*public static Optional<String> getEventCharacter()
     {
         //        System.out.println(c);
         return Optional.ofNullable(glfwGetKeyName(keyPressed, glfwGetKeyScancode(keyPressed)));
 
 
-    }
+    }*/
 
     public static void setGrabbed(boolean b) {
         if(b)
@@ -300,7 +296,7 @@ public static final class invocationcallbacks {
 
     }
 
-    public static void getDesktopDisplayMode()
+    /*public static void getDesktopDisplayMode()
     {
         final List<GLFWVidMode> glfwVidModes = glfwGetVideoModes(glfwGetPrimaryMonitor()).stream().toList();
         swapChainExtent.width(glfwVidModes.get(glfwVidModes.size()-1).width());
@@ -313,9 +309,9 @@ public static final class invocationcallbacks {
         monitor=0;
         swapChainExtent.width(a);
         swapChainExtent.height(b);
-    }
+    }*/
 
-//    static final void setXYPos(double v, double v1)
+    //    static final void setXYPos(double v, double v1)
 //
 //    {
 //        xPos=v;

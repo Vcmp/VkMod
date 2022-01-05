@@ -127,7 +127,7 @@ public final class renderer2 {
 
                 nvkQueueSubmit(Queues.graphicsQueue, 1, address2, VK_NULL_HANDLE);
 
-                memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PWAITSEMAPHORES, (AvailableSemaphore));
+                //memPutLong(VkPresentInfoKHR1 + VkPresentInfoKHR.PWAITSEMAPHORES, (AvailableSemaphore));
 
 
                 nvkQueuePresentKHR(Queues.presentQueue, VkPresentInfoKHR1);
@@ -149,10 +149,6 @@ public final class renderer2 {
             double dirY = Math.cosFromSin(dirX, v);
             //rotateTowardsXY2();//.getToAddress(Renderer2.aa);
             UniformBufferObject.mvp.rotateTowardsXY((float) dirX, (float) dirY, UniformBufferObject.trans).getToAddress(aa);
-    //            final double sin = Math.sin(glfwGetTime() / 1000);
-    //            trans.translate(x, y+= sin, z).getToAddress(Renderer2.aa);
-    //            trans.transform((float) (-cursorPos.y / -cursorPos.x)).getToAddress(Renderer2.aa);
-    //            memcpy2();
 
         }
     }

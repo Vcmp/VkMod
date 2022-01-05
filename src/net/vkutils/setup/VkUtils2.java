@@ -2,7 +2,6 @@ package vkutils.setup;
 
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.Configuration;
 import org.lwjgl.system.JNI;
@@ -32,23 +31,20 @@ import static vkutils.setup.Queues.device;
 import static vkutils.setup.Queues.surface;
 
 public final class VkUtils2 {
-    private static final MemSysm MemSys = new MemSysm();
-    private static final GLFWVidMode.Buffer videoModes;
-    private static final GLFWVidMode videoMode;
-    public static final long window;
+    static final MemSysm MemSys = new MemSysm();
+public static final long window;
     //        static final boolean ENABLE_VALIDATION_LAYERS = DEBUG.get(true);
     private static final Set<String> DEVICE_EXTENSIONS=new HashSet<>();
     private static VkInstance vkInstance;
-    private static final long[] pDebugMessenger = new long[1];
-    private static long debugMessenger;
+//    private static final long[] pDebugMessenger = new long[1];
     //    X(),
     //    Y
     //    KEY(1)
     private static final long monitor=0;
-    private static PointerBuffer glfwExtensions;
     private static final boolean ENABLE_VALIDATION_LAYERS = false;
     private static final Set<String> VALIDATION_LAYERS;
     private static final boolean debug = false;
+    private static final boolean checks = true;
 
     static {
 
@@ -57,8 +53,8 @@ public final class VkUtils2 {
 //            DEVICE_EXTENSIONS = set;
 
 
-        Configuration.DISABLE_CHECKS.set(!debug);
-        Configuration.DISABLE_FUNCTION_CHECKS.set(!debug);
+        Configuration.DISABLE_CHECKS.set(!checks);
+        Configuration.DISABLE_FUNCTION_CHECKS.set(!checks);
         Configuration.DEBUG.set(debug);
         Configuration.DEBUG_FUNCTIONS.set(debug);
         Configuration.DEBUG_STREAM.set(debug);
@@ -95,27 +91,6 @@ public final class VkUtils2 {
         glfwSetWindowShouldClose(window, false);
         glfwMakeContextCurrent(window);
 
-        videoModes=glfwGetVideoModes(window);
-        videoMode=glfwGetVideoMode(window);
-    }
-
-    static int debugCallback(int messageSeverity, int messageType, long pCallbackData, long pUserData) {
-
-        VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
-
-        final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        System.err.println("Validation layer: " + callbackData.pMessageString() +"-->"+ stackTrace[5]);
-
-        return VK_FALSE;
-    }
-
-    private static int createDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerCreateInfoEXT createInfo) {
-
-        if(vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT") != NULL) {
-            return vkCreateDebugUtilsMessengerEXT(instance, createInfo, MemSysm.pAllocator, pDebugMessenger);
-        }
-
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 
     //Stolen From Here: https://github.com/Naitsirc98/Vulkan-Tutorial-Java/blob/master/src/main/java/javavulkantutorial/Ch02ValidationLayers.java
@@ -169,7 +144,7 @@ public final class VkUtils2 {
         VkInstanceCreateInfo InstCreateInfo = VkInstanceCreateInfo.create(MemSysm.malloc3(VkInstanceCreateInfo.SIZEOF)).sType$Default();
 //                InstCreateInfo.sType(VK10.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
         memPutLong(InstCreateInfo.address() + VkInstanceCreateInfo.PAPPLICATIONINFO, vkApplInfo.address());
-        glfwExtensions = getRequiredExtensions();
+        PointerBuffer glfwExtensions = getRequiredExtensions();
         InstCreateInfo.ppEnabledExtensionNames(glfwExtensions);
         InstCreateInfo.pNext(extValidationFeatures.address());
 
@@ -207,23 +182,6 @@ public final class VkUtils2 {
     }
 
     //TODO: BestPractices + Make sure/Fix alignment issues so the ValdiatioN layers.DepugMessnegder/DebugPutput hjas enough space on The Stack./COntingous memAllocator/memsym
-    private static void setupDebugMessenger()
-    {
-        if(!ENABLE_VALIDATION_LAYERS) {
-            return;
-        }
-
-        VkDebugUtilsMessengerCreateInfoEXT createInfo = VkDebugUtilsMessengerCreateInfoEXT.create(MemSysm.malloc3(VkDebugUtilsMessengerCreateInfoEXT.SIZEOF)).sType$Default();
-//        createInfo.sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
-        createInfo.messageSeverity(VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT);
-        createInfo.messageType(VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT);
-        createInfo.pfnUserCallback(VkUtils2::debugCallback);
-        MemSysm.Memsys2.free(createInfo);//nmemFree(createInfo.address());
-
-        if(createDebugUtilsMessengerEXT(vkInstance, createInfo) != VK_SUCCESS)
-            throw new RuntimeException("Failed to set up debug messenger");
-        debugMessenger = pDebugMessenger[0];
-    }
 
     private static boolean isDeviceSuitable(VkPhysicalDevice device) {
 
@@ -323,13 +281,13 @@ public final class VkUtils2 {
     {
         {
         createInstance();
-        setupDebugMessenger();
+//        setupDebugMessenger();
         createSurface();
         pickPhysicalDevice();
         createLogicalDevice();
         SwapChainSupportDetails.createSwapChain();
         SwapChainSupportDetails.createImageViews();
-        PipeLine.createRenderPasses(true);
+        PipeLine.createRenderPasses();
         //renderer2.Buffers.createDescriptorSetLayout();
         PipeLine.createGraphicsPipelineLayout();
 
@@ -339,14 +297,14 @@ public final class VkUtils2 {
         Texture.createTextureImage();
         Texture.createTextureImageView();
 //        renderer2.Buffers.createTextureSampler();
-        Buffers.createVertexBufferStaging();
-        Buffers.createIndexBuffer();
-        Buffers.creanupBufferStaging();
+            Buffers.createVertexBufferStaging();
+            Buffers.createIndexBuffer();
+            Buffers.creanupBufferStaging();
         UniformBufferObject.createUniformBuffers();
         UniformBufferObject.createDescriptorPool();
         UniformBufferObject.createDescriptorSets();
         Buffers.createCommandBuffers();
-        Buffers.createVkEvents();
+            Buffers.createVkEvents();
     }
         MemSysm.stack.pop();
 
@@ -357,7 +315,7 @@ public final class VkUtils2 {
 
     public static void _mainDeletionQueue()
     {
-        doDestroyFreeAlloc((Buffers.vkImage), Buffers.capabilities.vkDestroyImage);
+        doDestroyFreeAlloc((Texture.vkImage), Buffers.capabilities.vkDestroyImage);
         doDestroyFreeAlloc((Buffers.vkAllocMemory), Buffers.capabilities.vkFreeMemory);
 //        doDestroyFreeAlloc(UniformBufferObject.textureSampler, Buffers.capabilities.vkDestroySampler);
         doDestroyFreeAlloc((UniformBufferObject.textureImageView), Buffers.capabilities.vkDestroyImageView);
@@ -530,18 +488,6 @@ public final class VkUtils2 {
 
 
 //        private static final boolean ENABLE_VALIDATION_LAYERS = DEBUG.get(true);
-
-
-
-
-        private static void destroyDebugUtilsMessengerEXT(VkInstance instance, long debugMessenger) {
-
-            if(vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT") != NULL) {
-                vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, MemSysm.pAllocator);
-            }
-
-        }
-
 
 
 }

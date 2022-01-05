@@ -1,12 +1,10 @@
 package vkutils.setup;
 
 import org.joml.Math;
-import org.joml.Matrix2f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.vulkan.*;
-import vkutils.cursorPos;
 
 
 import java.nio.LongBuffer;
@@ -23,9 +21,7 @@ public final class UniformBufferObject {
      public static final PointerBuffer uniformBuffers = memPointerBuffer(MemSysm.malloc3(16), 3);
      static final PointerBuffer uniformBuffersMemory = memPointerBuffer(MemSysm.malloc3(16), 3);
     static final int capacity = 16 * Float.BYTES;
-    private static final Matrix2f ax = new Matrix2f().identity();
-    private static final Matrix2f ax2 = new Matrix2f().identity();
-     public static long descriptorPool = 0;
+    public static long descriptorPool = 0;
     static final PointerBuffer descriptorSets = memPointerBuffer(MemSysm.malloc3(16), 3);
 
     static final long textureImageView = MemSysm.malloc(0);
@@ -36,12 +32,6 @@ public final class UniformBufferObject {
 
     public static final Matrix4f trans = new Matrix4f().identity();
 
-    private final static float x = 0;
-    private static final float y = 0;
-    private final static float z = 0;
-    private final static float v1;
-    private final static float a;
-    private final static float a1;
     public static final double aFloat = Math.toRadians(90D);
     //        private final static float a2;
 
@@ -57,10 +47,7 @@ public final class UniformBufferObject {
         mvp.mulPerspectiveAffine(new Matrix4f().determineProperties().setLookAt(0.0f, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f));
         mvp.translate(new Vector3f(0, 0, -4));
 
-        v1 = mvp.m13();
-        a = mvp.m00();
-        a1 = mvp.m01();
-//            a2 = mvp.m03();
+        //            a2 = mvp.m03();
 
     }
     //todo: Important: atcuall have to 'reset; or revert teh matrixces bakc to baseline.Idneitfy in order to atcually update te Unform Buffer(s) properly e.g. .etc i.e.
@@ -75,44 +62,10 @@ public final class UniformBufferObject {
     {
         for (int i = 0; i < SwapChainSupportDetails.swapChainImages.capacity(); i++) {
 
-            uniformBuffers.put((((Buffers.setBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, capacity)))));
+            uniformBuffers.put((((Buffers.setBuffer()))));
             uniformBuffersMemory.put((Buffers.createBuffer(uniformBuffers.get(i))));
         }
     }
-
-    private static void rotateTowardsXY2()
-    {
-        final double v = cursorPos.x - SwapChainSupportDetails.swapChainExtent.height() / -cursorPos.y - SwapChainSupportDetails.swapChainExtent.width();//(invokeD(Functions.GetTime) * aFloat);
-        double dirX = Math.sin(cursorPos.x / 100);
-        double dirY = -Math.cosFromSin(dirX, cursorPos.y / 100);
-
-        trans
-                .m00((float) Math.fma(a, dirY, dirX))
-                .m01((float) Math.fma(a1, dirY, -dirY))
-                .m02((float) Math.fma(v1, dirX, 0))
-                //.m03((float) Math.fma(a2, dirY, v1 * dirX))
-                .m10((float) Math.fma(a, -dirX, dirY))
-                .m11((float) Math.fma(a1, -dirX, dirY))
-                .m12((float) Math.fma(v1, dirY, 0));
-        //.m13((float) Math.fma(a2, -dirX, v1 * dirY));
-//                    .m20(mvp.m20())
-        //                    .m21(mvp.m21())
-        //                    .m22(mvp.m22())
-        //                    .m23(mvp.m23())
-//                    .m30(mvp.m30())
-        //                    .m31(mvp.m31())
-        //                    .m32(mvp.m32())
-        //                    .m33(mvp.m33());
-//                    .properties(properties & ~(PROPERTY_PERSPECTIVE | PROPERTY_IDENTITY | PROPERTY_TRANSLATION));
-    }
-
-   /* private static void memcpy2()
-    {
-        GLU2.theUnSafe.UNSAFE.putLong(renderer2.Renderer2.aa, GLU2.theUnSafe.UNSAFE.getLong(trans, 0xC));
-        GLU2.theUnSafe.UNSAFE.putLong(renderer2.Renderer2.aa + 0x8, GLU2.theUnSafe.UNSAFE.getLong(trans, 0x14));
-        GLU2.theUnSafe.UNSAFE.putLong(renderer2.Renderer2.aa + 0x10, GLU2.theUnSafe.UNSAFE.getLong(trans, 0x1C));
-        GLU2.theUnSafe.UNSAFE.putLong(renderer2.Renderer2.aa + 0x18, GLU2.theUnSafe.UNSAFE.getLong(trans, 0x24));
-    }*/
 
     static void createDescriptorPool()
     {
@@ -130,7 +83,7 @@ public final class UniformBufferObject {
             VkDescriptorPoolCreateInfo poolCreateInfo = VkDescriptorPoolCreateInfo.create(MemSysm.calloc(VkDescriptorPoolCreateInfo.SIZEOF)).sType$Default()
 //                        .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO)
                     .pPoolSizes(poolSize)
-                    .maxSets(PipeLine.swapChainImages.length);
+                    .maxSets(SwapChainSupportDetails.swapChainImages.capacity());
             descriptorPool = MemSysm.doPointerAllocSafe(poolCreateInfo, device.getCapabilities().vkCreateDescriptorPool);
 //               descriptorPool=aLong[0];
         }

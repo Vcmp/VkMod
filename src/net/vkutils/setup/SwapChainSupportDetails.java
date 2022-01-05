@@ -22,6 +22,9 @@ public final class SwapChainSupportDetails {
     public static final PointerBuffer swapChainImages = memPointerBuffer(MemSysm.malloc3(24), 3);
     public static final PointerBuffer swapChainImageViews = memPointerBuffer(MemSysm.malloc3(24), 3);
     static final long renderPass = MemSysm.malloc(0);
+    //prepAlloc
+    //        private static final long[] vkRenderPass = new long[SwapChainSupportDetails.imageIndex];
+//    static final long[] swapChainImages = new long[3];
     static int swapChainImageFormat;
     public static VkExtent2D swapChainExtent;
     private static final VkSurfaceCapabilitiesKHR capabilities = VkSurfaceCapabilitiesKHR.create(MemSysm.stack.getAddress());
@@ -76,9 +79,9 @@ public final class SwapChainSupportDetails {
                 .levelCount(1)
                 .baseArrayLayer(0)
                 .layerCount(1);
-        for (int iu = 0; iu < PipeLine.swapChainImages.length; iu++) {
+        for (int iu = 0; iu < swapChainImages.capacity(); iu++) {
 
-            swapChainImageViews.put(iu, MemSysm.doPointerAllocSafe(createInfo.image(PipeLine.swapChainImages[iu]), Buffers.capabilities.vkCreateImageView));
+            swapChainImageViews.put(iu, MemSysm.doPointerAllocSafe(createInfo.image(swapChainImages.get(iu)), Buffers.capabilities.vkCreateImageView));
         }
     }
 
@@ -222,7 +225,8 @@ public final class SwapChainSupportDetails {
 
             vkGetSwapchainImagesKHR(device, memGetLong(swapChain), new int[]{(imageCount)}, pSwapchainImages);
 
-            System.arraycopy(pSwapchainImages, 0, PipeLine.swapChainImages, 0, pSwapchainImages.length);
+//            System.arraycopy(pSwapchainImages, 0, swapChainImages, 0, pSwapchainImages.length);
+            swapChainImages.put(pSwapchainImages);
 
             swapChainImageFormat = VkSurfaceFormatKHR.nformat(surfaceFormat.address());
             swapChainExtent = VkExtent2D.create().set(extent);

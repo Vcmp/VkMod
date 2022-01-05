@@ -15,6 +15,8 @@ import static vkutils.setup.Queues.device;
 
 final class Texture {
 
+    static final long vkImage = (MemSysm.malloc3(8));
+
     static void createTextureImage()
     {
         final String a = (Paths.get("").toAbsolutePath() + ("/shaders/terrain.png"));
@@ -34,9 +36,9 @@ final class Texture {
         }
 
         long[] stagingBufferImg = {0};
-        Buffers.setBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, imageSize, stagingBufferImg, VK_SHARING_MODE_EXCLUSIVE);
+        Buffers.setBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, imageSize, stagingBufferImg);
         long[] stagingBufferMemoryImg = {0};
-        Buffers.createBuffer(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBufferImg, stagingBufferMemoryImg);
+        Buffers.createBuffer(stagingBufferImg, stagingBufferMemoryImg);
 
 
         nvkMapMemory(device, stagingBufferMemoryImg[0], 0, imageSize, 0, MemSysm.address);
@@ -49,17 +51,16 @@ final class Texture {
 
         createImage(pWidth[0], pHeight[0],
                 VK_FORMAT_R8G8B8A8_SRGB,
-                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                Buffers.vkImage
+                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
         );
 
 
-        copyBufferToImage(stagingBufferImg, Buffers.vkImage, pWidth[0], pHeight[0]);
-        transitionImageLayout(Buffers.vkImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        copyBufferToImage(stagingBufferImg, pWidth[0], pHeight[0]);
+        transitionImageLayout(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     }
 
-    private static void copyBufferToImage(long @NotNull [] buffer, long image, int width, int height)
+    private static void copyBufferToImage(long @NotNull [] buffer, int width, int height)
     {
         VkCommandBuffer commandBuffer = Buffers.beginSingleTimeCommands();
         VkBufferImageCopy region = VkBufferImageCopy.create(MemSysm.malloc3(VkBufferImageCopy.SIZEOF))
@@ -75,7 +76,7 @@ final class Texture {
         nvkCmdCopyBufferToImage(
                 commandBuffer,
                 buffer[0],
-                memGetLong(image),
+                memGetLong(vkImage),
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 1,
                 region.address()
@@ -84,7 +85,7 @@ final class Texture {
 
     }
 
-    static void transitionImageLayout(long image, int format, int oldLayout, int newLayout)
+    static void transitionImageLayout(int format, int oldLayout, int newLayout)
     {
         VkCommandBuffer commandBuffer = Buffers.beginSingleTimeCommands();
 
@@ -94,7 +95,7 @@ final class Texture {
                 .newLayout(newLayout)
                 .srcQueueFamilyIndex(VK_IMAGE_LAYOUT_UNDEFINED)
                 .dstQueueFamilyIndex(VK_IMAGE_LAYOUT_UNDEFINED)
-                .image(memGetLong(image));
+                .image(memGetLong(vkImage));
         barrier.subresourceRange()
                 .aspectMask(format)
                 .baseMipLevel(0)
@@ -149,7 +150,7 @@ final class Texture {
 
     }
 
-    private static void createImage(int width, int height, int format, int usage, long pTextureImage)
+    private static void createImage(int width, int height, int format, int usage)
     {
         VkImageCreateInfo imageInfo = VkImageCreateInfo.create(MemSysm.malloc(VkImageCreateInfo.SIZEOF))
                 .sType(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
@@ -166,11 +167,11 @@ final class Texture {
                 .samples(VK_SAMPLE_COUNT_1_BIT)
                 .sharingMode(VK_SHARING_MODE_EXCLUSIVE);
         MemSysm.Memsys2.free(imageInfo);
-        MemSysm.Memsys2.doPointerAllocSafeX(imageInfo, Buffers.capabilities.vkCreateImage, pTextureImage);
+        MemSysm.Memsys2.doPointerAllocSafeX(imageInfo, Buffers.capabilities.vkCreateImage, vkImage);
         VkMemoryDedicatedRequirementsKHR img2 = VkMemoryDedicatedRequirementsKHR.create(MemSysm.address).sType$Default();
 
         VkMemoryRequirements2 memRequirements = VkMemoryRequirements2.create(MemSysm.address).sType$Default();
-        vkGetImageMemoryRequirements(device, memGetLong(pTextureImage), memRequirements.memoryRequirements());
+        vkGetImageMemoryRequirements(device, memGetLong(vkImage), memRequirements.memoryRequirements());
 
         VkMemoryAllocateInfo allocInfo = VkMemoryAllocateInfo.create(MemSysm.malloc(VkMemoryAllocateInfo.SIZEOF))
                 .sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
@@ -181,7 +182,7 @@ final class Texture {
         if (img2.prefersDedicatedAllocation() || img2.requiresDedicatedAllocation()) {
             System.out.println("Using Dedicated Memory Allocation");
             VkMemoryDedicatedAllocateInfo dedicatedAllocateInfoKHR = VkMemoryDedicatedAllocateInfo.create(MemSysm.malloc3(VkMemoryDedicatedAllocateInfo.SIZEOF)).sType$Default()
-                    .image(memGetLong(pTextureImage));
+                    .image(memGetLong(vkImage));
 
             allocInfo.pNext(dedicatedAllocateInfoKHR);
         }
@@ -189,7 +190,7 @@ final class Texture {
         MemSysm.Memsys2.free(allocInfo);
         MemSysm.Memsys2.doPointerAllocSafeX(allocInfo, Buffers.capabilities.vkAllocateMemory, Buffers.vkAllocMemory);
 
-        vkBindImageMemory(device, memGetLong(pTextureImage), memGetLong(Buffers.vkAllocMemory), 0);
+        vkBindImageMemory(device, memGetLong(vkImage), memGetLong(Buffers.vkAllocMemory), 0);
 
     }
 
@@ -200,7 +201,7 @@ final class Texture {
 
     static void createTextureImageView()
     {
-        createImageView(Buffers.vkImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, UniformBufferObject.textureImageView);
+        createImageView(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, UniformBufferObject.textureImageView);
     }
 
     static void createDepthResources()
@@ -209,13 +210,12 @@ final class Texture {
         int depthFormat = findDepthFormat();
         createImage(SwapChainSupportDetails.swapChainExtent.width(), SwapChainSupportDetails.swapChainExtent.height(),
                 depthFormat,
-                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                Buffers.vkImage
+                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
         );
 
 
-        createImageView(Buffers.vkImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, Buffers.depthImageView);
-        transitionImageLayout(Buffers.vkImage, depthFormat,
+        createImageView(depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, Buffers.depthImageView);
+        transitionImageLayout(depthFormat,
                 VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
     }
 
@@ -246,11 +246,11 @@ final class Texture {
         throw new RuntimeException("failed to find supported format!");
     }
 
-    private static void createImageView(long i, int swapChainImageFormat, int vkImageAspect, long a)
+    private static void createImageView(int swapChainImageFormat, int vkImageAspect, long a)
     {
         VkImageViewCreateInfo createInfo = VkImageViewCreateInfo.create(MemSysm.calloc(VkImageViewCreateInfo.SIZEOF)).sType$Default()
 //                    .sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
-                .image(memGetLong(i))
+                .image(memGetLong(vkImage))
                 .viewType(VK_IMAGE_VIEW_TYPE_2D)
                 .format(swapChainImageFormat);
 
