@@ -1,10 +1,12 @@
-package vkutils;
+package vkutils.setup;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.system.NativeResource;
 import org.lwjgl.vulkan.VkShaderModuleCreateInfo;
+import vkutils.setup.Buffers;
+import vkutils.setup.MemSysm;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -56,7 +58,7 @@ final class ShaderSPIRVUtils {
 
         {
 
-            return MemSysm.doPointerAllocSafeA(VkShaderModuleCreateInfo.calloc(MemSysm.stack).sType$Default().pCode(spirvCode), renderer2.Buffers.capabilities.vkCreateShaderModule);
+            return MemSysm.doPointerAllocSafeA(VkShaderModuleCreateInfo.calloc(MemSysm.stack).sType$Default().pCode(spirvCode), Buffers.capabilities.vkCreateShaderModule);
         }
     }
 

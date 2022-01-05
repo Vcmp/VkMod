@@ -1,6 +1,8 @@
 package vkutils;
 
 
+import vkutils.setup.VkUtils2;
+
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.JNI.invokePI;
 import static org.lwjgl.system.JNI.invokeV;
@@ -13,9 +15,10 @@ private static boolean a = true;
     {
 
         VkUtils2.extracted();
+        //System.gc();
 
 //            int i = 0;
-         new Thread(VkMod::run).start();
+         //new Thread(VkMod::run).start();
 
         while (invokePI(VkUtils2.window, Functions.WindowShouldClose) == 0)
         {
@@ -29,7 +32,7 @@ private static boolean a = true;
         }
         a=false;
 
-        renderer2.cleanup();
+        VkUtils2.cleanup();
         glfwTerminate();
     }
 
@@ -37,7 +40,7 @@ private static boolean a = true;
     private static void run()
     {
         long l = System.currentTimeMillis();
-        cursorPos.invocationcallbacks.isActive();;//glfwPollEvents();
+        cursorPos.invocationcallbacks.isActive();//glfwPollEvents();
         while (a) {
 
             glfwWaitEventsTimeout(1);

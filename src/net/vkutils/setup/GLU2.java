@@ -1,4 +1,4 @@
-package vkutils;
+package vkutils.setup;
 
 import sun.misc.Unsafe;
 

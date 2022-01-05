@@ -1,35 +1,40 @@
-package vkutils;
+package vkutils.setup;
 
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.*;
+import org.lwjgl.system.Checks;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.Pointer;
+import org.lwjgl.system.Struct;
 import org.lwjgl.system.jemalloc.JEmalloc;
-import org.lwjgl.vulkan.*;
+import org.lwjgl.vulkan.VkAllocationCallbacks;
+import org.lwjgl.vulkan.VkCommandBuffer;
+import org.lwjgl.vulkan.VkMemoryRequirements;
+import org.lwjgl.vulkan.VkSemaphoreCreateInfo;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.util.*;
+import java.util.HashMap;
 
 import static org.lwjgl.system.JNI.*;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.vulkan.VK10.*;
-import static vkutils.VkUtils2.Queues.device;
+import static vkutils.setup.Queues.device;
 
 
-final record MemSysm() /*implements MemoryAllocator*/ {
+public final class MemSysm /*implements MemoryAllocator*/ {
 
     //    protected static final VkAllocationCallbacks pAllocator = null;
     //int m = JEmalloc.je_mallctl(),
-    static final MemoryStack stack = MemoryStack.stackPush();
+    public static final MemoryStack stack = MemoryStack.stackPush();
     static final VkAllocationCallbacks pAllocator = null;
     private static final long[] pDummyPlacementPointerAlloc = {0};
 //    private static long sizeOf;
     private static long frame;
     static long stacks;
     static final HashMap<Long, Long> tracker = new HashMap<>();
-    static final long size = 512L;//0x1FF;
-    static final long address = JEmalloc.nje_malloc(size);//+VkMemoryRequirements.SIZEOF;//nmemAllocChecked(Pointer.POINTER_SIZE);
+    public static final long size = 512L;//0x1FF;
+    public static final long address = JEmalloc.nje_malloc(size);//+VkMemoryRequirements.SIZEOF;//nmemAllocChecked(Pointer.POINTER_SIZE);
         static
         {
             System.out.println("BAse Address: "+address);
@@ -243,7 +248,7 @@ final record MemSysm() /*implements MemoryAllocator*/ {
     static long doPointerAlloc5L(Pointer device, Pointer pipelineInfo)
     {
         Checks.check(pipelineInfo.address());
-        Memsys2.checkCall(callPJPPPI(device.address(), VK_NULL_HANDLE, 1, pipelineInfo.address(), NULL, pipelineInfo.address(), renderer2.Buffers.capabilities.vkCreateGraphicsPipelines));
+        Memsys2.checkCall(callPJPPPI(device.address(), VK_NULL_HANDLE, 1, pipelineInfo.address(), NULL, pipelineInfo.address(), Buffers.capabilities.vkCreateGraphicsPipelines));
         return memGetLong(pipelineInfo.address());
     }
 
@@ -257,8 +262,7 @@ final record MemSysm() /*implements MemoryAllocator*/ {
 
     public static long sizeof(long address)
     {
-        final long l = JEmalloc.nje_sallocx(address, 0);
-        return l;
+        return JEmalloc.nje_sallocx(address, 0);
     }
 
     public static void setFrame(int i)
@@ -286,6 +290,13 @@ final record MemSysm() /*implements MemoryAllocator*/ {
     public static long mallocSafe(int sizeof)
     {
         return stack.nmalloc(Pointer.POINTER_SIZE, sizeof);
+    }
+
+    public static void resetFrame()
+    {
+        JEmalloc.nje_dallocx(address, 0);
+        JEmalloc.nje_free(address);
+        frame=0;
     }
 
     public long nmalloc(int a)
@@ -316,19 +327,8 @@ final record MemSysm() /*implements MemoryAllocator*/ {
         return put;
 
     }
-    //Try to Avoid alloctaing too @far; from teh atcual instance in which it s inetded to be utilsied/ (In rode to aovid ponetia, isues witH misalogn,ents/AccessViolations
-    public static PointerBuffer longs(Reference graphicsFamily)
-    {
-        final PointerBuffer put = memPointerBuffer(address + (frame), 1);
-        //for (Reference addr: graphicsFamily)
-        {
-            put.put(graphicsFamily.AX());
-        }
-        put.flip();
-        frame+=put.capacity();
-        System.out.println("ByteBuf: "+put.address0()+"+"+frame);
-        return put;
-    }public static @NotNull PointerBuffer longs(Pointer... graphicsFamily)
+
+    public static @NotNull PointerBuffer longs(Pointer... graphicsFamily)
     {
         final PointerBuffer put = memPointerBuffer(address + (frame), graphicsFamily.length );
         for (Pointer addr: graphicsFamily)
@@ -347,17 +347,11 @@ final record MemSysm() /*implements MemoryAllocator*/ {
         return put;
     }
 
-     static final class Memsys2 {
+     public static final class Memsys2 {
 
 //        private static final PointerBuffer removed = memPointerBuffer(address+0x7FF, 96);
 
-        static void doPointerAllocSafeExp2a(Pointer allocateInfo, long vkCreateBuffer, Reference a)
-        {
-            //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
-            free(allocateInfo);
-            System.out.println("Attempting to Call: ->" + allocateInfo);
-            checkCall(callPPPPI(device.address(), Checks.check(allocateInfo.address()), NULL, a.address(), vkCreateBuffer));
-        }static void doPointerAllocSafeExp2(Pointer allocateInfo, long vkCreateBuffer, Pointer a)
+         static void doPointerAllocSafeExp2(Pointer allocateInfo, long vkCreateBuffer, Pointer a)
         {
             //            vkAllocateMemory(Queues.device, allocateInfo, pAllocator, pVertexBufferMemory);
             free(allocateInfo);
@@ -392,7 +386,7 @@ final record MemSysm() /*implements MemoryAllocator*/ {
             frame-=allocateInfo.sizeof();
         }
 
-        static void free(@NotNull Pointer ptr)
+        public static void free(@NotNull Pointer ptr)
         {
             final long orDefault = tracker.getOrDefault(ptr.address(), 0L);
             final long stacks = memGetLong(ptr.address());//+ orDefault;

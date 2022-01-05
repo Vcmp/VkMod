@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.lwjgl.system.JNI.invokeV;
-import static vkutils.VkUtils2.SwapChainSupportDetails.swapChainExtent;
-import static vkutils.VkUtils2.window;
+import static vkutils.setup.SwapChainSupportDetails.swapChainExtent;
+import static vkutils.setup.VkUtils2.window;
 
 
 public final class cursorPos {
@@ -51,7 +51,7 @@ public final class cursorPos {
 
 
 
-static final class invocationcallbacks {
+public static final class invocationcallbacks {
     private static final GLFWErrorCallback errorCallback;
     private static GLFWFramebufferSizeCallback sizeCallback;
 
@@ -104,9 +104,7 @@ static final class invocationcallbacks {
             System.out.println(key + "+" + action + "+" + mods);
             System.out.println("IsPressed:" + isPressed + "IsReleased: " + isReleased);
         }));
-        glfwSetScrollCallback(window, scrollCallback = GLFWScrollCallback.create((window1, xoffset1, yoffset1) -> {
-            System.out.println(xoffset1 + "+" + yoffset1);
-        }));
+        glfwSetScrollCallback(window, scrollCallback = GLFWScrollCallback.create((window1, xoffset1, yoffset1) -> System.out.println(xoffset1 + "+" + yoffset1)));
         glfwSetFramebufferSizeCallback(window, framebuffer = GLFWFramebufferSizeCallback.create((l, i, i1) -> {
 
             System.out.println("ReSize");
